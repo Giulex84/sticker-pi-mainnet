@@ -38,7 +38,7 @@ export default async function handler(req,res){
     await rateLimit(user.uid,'payment',20,60);
     const body=req.body||{};
     if(!body.action)return res.status(200).json({success:true,user:{uid:user.uid,username:user.username}});
-    const apiKey=(apiKey||'').trim();
+    const apiKey=(process.env.PI_API_KEY||'').trim();
     if(!apiKey)return res.status(503).json({success:false,error:'Payment service unavailable'});
     const {action,paymentId,txid}=body;
     if(!['approve','complete','recover'].includes(action)||!paymentId)return res.status(400).json({success:false,error:'Invalid payment request'});

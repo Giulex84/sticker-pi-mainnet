@@ -1589,6 +1589,9 @@
               player = { ...player, ...d.player };
               render();
             }
+          } else if (d.cancelled) {
+            pendingPayment = null;
+            setPaymentStatus("Previous incomplete payment cleared ✓ You can retry safely.");
           }
         } catch (e) {
           setPaymentStatus(e.message);
@@ -1644,7 +1647,13 @@
             {
               onReadyForServerApproval: async (paymentId) => {
                 setPaymentStatus("Approving payment…");
-                await api({ action: "approve", paymentId });
+                try {
+                  await api({ action: "approve", paymentId });
+                } catch (error) {
+                  setPaymentStatus("Approval failed: " + error.message);
+                  b.disabled = false;
+                  throw error;
+                }
               },
               onReadyForServerCompletion: async (paymentId, txid) => {
                 setPaymentStatus("Verifying transaction…");

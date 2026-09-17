@@ -1632,10 +1632,12 @@
           b.disabled = false;
         }
       }
+      let paymentApprovalFailure = "";
       async function buyPack() {
         if (!authData) return;
         const b = document.getElementById("payBtn");
         b.disabled = true;
+        paymentApprovalFailure = "";
         setPaymentStatus("Opening Pi payment…");
         try {
           await Pi.createPayment(
@@ -1650,7 +1652,8 @@
                 try {
                   await api({ action: "approve", paymentId });
                 } catch (error) {
-                  setPaymentStatus("Approval failed: " + error.message);
+                  paymentApprovalFailure = "Approval failed: " + error.message;
+                  setPaymentStatus(paymentApprovalFailure);
                   b.disabled = false;
                   throw error;
                 }
@@ -1668,7 +1671,7 @@
                 }
               },
               onCancel: () => {
-                setPaymentStatus("Payment cancelled");
+                setPaymentStatus(paymentApprovalFailure || "Payment cancelled");
                 b.disabled = false;
               },
               onError: (error) => {

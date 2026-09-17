@@ -1,0 +1,1685 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0b1024" />
+    <meta
+      name="description"
+      content="Play daily challenges, collect sticker packs and complete albums with Pi."
+    />
+    <title>Sticker.pi</title>
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <style>
+      :root {
+        --bg: #070b18;
+        --card: #121831;
+        --card2: #171f3d;
+        --line: #2b3568;
+        --text: #f8f9ff;
+        --muted: #9ca7d3;
+        --accent: #8877ff;
+        --accent2: #39dec7;
+        --gold: #ffd166;
+        --danger: #ff6b86;
+        --good: #63f1bd;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 85% 0, #2b3475 0, transparent 31%),
+          radial-gradient(circle at 10% 35%, #172052 0, transparent 26%),
+          var(--bg);
+        color: var(--text);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      .wrap {
+        width: min(780px, 100%);
+        margin: auto;
+        padding: 18px 14px 100px;
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .brand {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .logo {
+        width: 52px;
+        height: 52px;
+        border-radius: 17px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        display: grid;
+        place-items: center;
+        font-weight: 1000;
+        font-size: 24px;
+        color: #08101f;
+        box-shadow: 0 12px 30px #5f62ff33;
+      }
+      .badge {
+        font-size: 12px;
+        font-weight: 900;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--accent2);
+      }
+      .hero,
+      .card,
+      .tile {
+        background: linear-gradient(145deg, #171e3b, #10162b);
+        border: 1px solid var(--line);
+        box-shadow: 0 18px 50px #0002;
+      }
+      .hero {
+        padding: 25px 20px;
+        margin-top: 20px;
+        border-radius: 26px;
+      }
+      .hero h1 {
+        font-size: clamp(36px, 9vw, 58px);
+        line-height: 0.98;
+        margin: 0 0 12px;
+      }
+      .heroGlow {
+        position: relative;
+        overflow: hidden;
+      }
+      .heroGlow:after {
+        content: "";
+        position: absolute;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        background: #41dfc733;
+        filter: blur(10px);
+        right: -60px;
+        top: -80px;
+      }
+      .muted {
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .primary,
+      .secondary,
+      .ghost {
+        border: 0;
+        border-radius: 16px;
+        padding: 14px 16px;
+        font-weight: 900;
+        font-size: 15px;
+      }
+      .primary {
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: #08101f;
+      }
+      .secondary {
+        background: #20294e;
+        color: var(--text);
+        border: 1px solid #374273;
+      }
+      .ghost {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--line);
+      }
+      button {
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .wide {
+        width: 100%;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .celebration {
+        position: fixed; inset: 0; z-index: 100; display: grid; place-items: center;
+        padding: 24px; background: #050817e8; backdrop-filter: blur(12px);
+      }
+      .celebrationCard {
+        width: min(430px, 100%); padding: 30px 22px; text-align: center;
+        border-radius: 28px; border: 1px solid #ffd166;
+        background: radial-gradient(circle at 50% 0, #6b552c, #171e3b 46%, #10162b);
+        box-shadow: 0 0 70px #ffd16655;
+      }
+      .celebrationIcon { font-size: 76px; animation: pop .65s ease both; }
+      .masterFrame { border-color: #ffd166 !important; box-shadow: 0 0 30px #ffd16633; }
+      .lang {
+        display: flex;
+        gap: 8px;
+        margin-top: 14px;
+      }
+      .lang button.active {
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .dashboard {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 16px 0;
+      }
+      .metric {
+        background: linear-gradient(145deg, #171f3e, #11172d);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 14px;
+      }
+      .metric span {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .metric b {
+        display: block;
+        font-size: 25px;
+        margin-top: 6px;
+      }
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 7px;
+        margin: 14px 0;
+        padding: 8px 0;
+        background: #080c1bdc;
+        backdrop-filter: blur(14px);
+      }
+      .nav button {
+        padding: 11px 5px;
+        font-size: 12px;
+      }
+      .nav button.active {
+        background: linear-gradient(135deg, #4c4fa0, #223c69);
+        border-color: #7787ff;
+      }
+      .section {
+        margin-top: 16px;
+      }
+      .section h2 {
+        margin: 0 0 10px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      .tile {
+        padding: 17px;
+        border-radius: 21px;
+      }
+      .tile strong {
+        display: block;
+        font-size: 18px;
+        margin-bottom: 6px;
+      }
+      .pack {
+        font-size: 46px;
+      }
+      .status {
+        margin-top: 10px;
+        font-size: 13px;
+        color: var(--accent2);
+      }
+      .quest {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+        padding: 13px 0;
+        border-bottom: 1px solid #28305b;
+      }
+      .quest:last-child {
+        border-bottom: 0;
+      }
+      .pill {
+        display: inline-block;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 6px 9px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .gameBox {
+        text-align: center;
+        transition:
+          border-color 0.2s ease,
+          box-shadow 0.2s ease;
+      }
+      .gameBox.fever {
+        border-color: #ffd166;
+        box-shadow:
+          0 0 0 1px #ffd16655,
+          0 0 34px #ff8a3344;
+      }
+      .gameBox.fever .timer,
+      .gameBox.fever .combo {
+        color: #ffcf5a;
+        text-shadow: 0 0 18px #ff8a33;
+      }
+      .gameBox.fever .targetPrompt {
+        border-color: #ffd166;
+        background: linear-gradient(135deg, #4b2f1f, #2c1f45);
+        animation: feverPulse 0.55s ease-in-out infinite alternate;
+      }
+      .gameHud {
+        display: flex;
+        justify-content: flex-end;
+        gap: 18px;
+        align-items: flex-start;
+      }
+      .timer {
+        font-size: 44px;
+        font-weight: 1000;
+        color: var(--gold);
+      }
+      .score {
+        font-size: 18px;
+        color: var(--accent2);
+        font-weight: 900;
+      }
+      .combo {
+        font-size: 13px;
+        font-weight: 900;
+        color: var(--gold);
+        min-height: 20px;
+      }
+      .accuracy {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 3px;
+      }
+      .sequence {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+      .sequenceStep {
+        font-size: 44px;
+        line-height: 1;
+        padding: 6px;
+        border: 2px solid transparent;
+        border-radius: 14px;
+        opacity: 0.42;
+        filter: grayscale(0.45);
+        transition: 0.15s ease;
+      }
+      .sequenceStep.current {
+        opacity: 1;
+        filter: none;
+        border-color: var(--gold);
+        background: #ffffff0b;
+        transform: scale(1.08);
+      }
+      .sequenceStep.done {
+        opacity: 0.55;
+        filter: none;
+        border-color: var(--good);
+      }
+      .targetPrompt {
+        margin: 16px 0 6px;
+        padding: 14px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #202956, #172548);
+        border: 1px solid #4655a0;
+      }
+      .targetPrompt .label {
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-weight: 900;
+      }
+      .targetPrompt .goal {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 8px;
+      }
+      .goalEmoji {
+        font-size: 54px;
+        filter: drop-shadow(0 9px 16px #0007);
+      }
+      .goalName {
+        font-size: 20px;
+        font-weight: 1000;
+      }
+      .gameGrid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 14px;
+      }
+      .target {
+        position: relative;
+        font-size: 64px;
+        line-height: 1;
+        background: linear-gradient(150deg, #222c56, #18203e);
+        border: 2px solid transparent;
+        border-radius: 22px;
+        padding: 15px 8px;
+        min-height: 96px;
+        transition:
+          transform 0.08s ease,
+          border-color 0.15s ease,
+          background 0.15s ease;
+        touch-action: manipulation;
+      }
+      .target:active {
+        transform: scale(0.94);
+      }
+      .target.good {
+        border-color: var(--good);
+        background: #123d3b;
+      }
+      .target.bad {
+        border-color: var(--danger);
+        background: #3b1a2a;
+        animation: shake 0.25s ease;
+      }
+      .target.pop {
+        animation: popTarget 0.18s ease;
+      }
+      .roundMsg {
+        min-height: 24px;
+        font-weight: 900;
+        margin-top: 10px;
+      }
+      .medals {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .medals span {
+        padding: 6px 9px;
+        border-radius: 999px;
+        background: #0d1329;
+        border: 1px solid var(--line);
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .stickerCard {
+        position: relative;
+        text-align: center;
+        padding: 14px;
+        border-radius: 20px;
+        background: linear-gradient(155deg, #222b55, #11162e);
+        border: 1px solid #394475;
+        min-height: 145px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .stickerArt {
+        font-size: 56px;
+        filter: drop-shadow(0 8px 12px #0005);
+      }
+      .stickerName {
+        font-weight: 900;
+        margin-top: 8px;
+      }
+      .rarity {
+        font-size: 11px;
+        color: var(--gold);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .locked {
+        filter: grayscale(1);
+        opacity: 0.45;
+      }
+      .count {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: #080d1f;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 4px 7px;
+        font-size: 11px;
+      }
+      .progress {
+        height: 10px;
+        background: #0a0f22;
+        border-radius: 999px;
+        overflow: hidden;
+        border: 1px solid #26305d;
+      }
+      .progress i {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
+      }
+      .packReveal {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .packReveal .stickerCard { min-width: 0; padding: 10px 5px; }
+      .packReveal .stickerArt { font-size: clamp(38px, 12vw, 56px); }
+      .packReveal .stickerName { font-size: clamp(12px, 4vw, 16px); overflow-wrap: anywhere; }
+      .packReveal .stickerCard { opacity: 0; transform: translateY(18px) scale(.82); }
+      .packReveal .stickerCard.revealed { animation: packCardReveal .52s cubic-bezier(.2,.9,.3,1.25) forwards; }
+      .packReveal .rarity-rare { border-color: #54bfff; box-shadow: 0 0 22px #299cff33; }
+      .packReveal .rarity-epic { border-color: #b47cff; box-shadow: 0 0 26px #984fff55; }
+      .packReveal .rarity-legendary { border-color: var(--gold); box-shadow: 0 0 34px #ffd16677; background: linear-gradient(155deg,#4a3a1d,#17182e); }
+      .revealBadge { position: absolute; top: 7px; left: 7px; padding: 4px 6px; border-radius: 999px; font-size: 9px; font-weight: 1000; letter-spacing: .06em; background: var(--accent2); color: #07101d; }
+      .revealBadge.dupe { background: #303a67; color: #d9ddff; }
+      .packSummary { min-height: 24px; margin-top: 10px; color: var(--accent2); font-weight: 900; text-align: center; }
+      @keyframes packCardReveal { 0% { opacity:0; transform:translateY(18px) scale(.82) rotate(-3deg) } 70% { transform:translateY(-4px) scale(1.04) rotate(1deg) } 100% { opacity:1; transform:none } }
+      .reveal {
+        animation: pop 0.45s ease both;
+      }
+      @keyframes pop {
+        0% {
+          transform: scale(0.5) rotate(-5deg);
+          opacity: 0;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      @keyframes popTarget {
+        50% {
+          transform: scale(1.08);
+        }
+      }
+      @keyframes shake {
+        25% {
+          transform: translateX(-4px);
+        }
+        50% {
+          transform: translateX(4px);
+        }
+        75% {
+          transform: translateX(-2px);
+        }
+      }
+      @keyframes feverPulse {
+        from {
+          transform: scale(1);
+        }
+        to {
+          transform: scale(1.018);
+        }
+      }
+      .achievement {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .achievement .icon {
+        font-size: 32px;
+      }
+      .notice {
+        padding: 12px 14px;
+        border: 1px solid #655b2d;
+        background: #302816;
+        border-radius: 15px;
+        color: #ffe3a0;
+        margin-top: 10px;
+      }
+      .footer {
+        text-align: center;
+        color: #747ca7;
+        font-size: 12px;
+        margin-top: 30px;
+      }
+      .footer a {
+        color: inherit;
+      }
+      .mini {
+        font-size: 12px;
+      }
+      .flash {
+        animation: flash 0.4s ease;
+      }
+      @keyframes flash {
+        50% {
+          transform: scale(1.03);
+        }
+      }
+      @media (max-width: 520px) {
+        .grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .gameGrid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        .target {
+          font-size: 55px;
+          padding: 10px;
+          min-height: 86px;
+        }
+        .nav {
+          grid-template-columns: repeat(5, 1fr);
+        }
+        .gameHud {
+          gap: 12px;
+        }
+        .targetPrompt .goal {
+          gap: 8px;
+        }
+        .goalEmoji {
+          font-size: 48px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <header class="top">
+        <div class="brand">
+          <div class="logo">S</div>
+          <div>
+            <strong style="font-size: 22px">Sticker.pi</strong>
+            <div class="muted" data-i18n="tag">Play. Collect. Trade.</div>
+          </div>
+        </div>
+        <span class="badge">PI MAINNET</span>
+      </header>
+      <div class="lang">
+        <button id="enBtn" class="ghost" onclick="setLang('en')">EN</button
+        ><button id="zhBtn" class="ghost" onclick="setLang('zh')">中文</button>
+      </div>
+      <section id="loggedOut">
+        <div class="hero heroGlow">
+          <span class="pill">DAILY • SOCIAL • COLLECTIBLE</span>
+          <h1 data-i18n="hero">Build your sticker world.</h1>
+          <p class="muted" data-i18n="heroSub">
+            Play fast challenges, open packs, complete albums and build a
+            collection other Pioneers will want to trade for.
+          </p>
+          <button id="loginBtn" class="primary wide" data-i18n="login">
+            Continue with Pi
+          </button>
+        </div>
+      </section>
+      <section id="app" class="hidden">
+        <div class="top" style="margin-top: 20px">
+          <div>
+            <div class="muted" data-i18n="signed">Signed in as</div>
+            <strong id="username">@pioneer</strong>
+            <div id="storageFlag" class="mini muted"></div>
+          </div>
+          <button class="ghost" id="logoutBtn" data-i18n="reset">
+            Reset view
+          </button>
+        </div>
+        <div class="dashboard">
+          <div class="metric">
+            <span data-i18n="level">Level</span><b id="levelValue">1</b>
+          </div>
+          <div class="metric">
+            <span data-i18n="streak">Daily streak</span
+            ><b id="streakValue">0 🔥</b>
+          </div>
+          <div class="metric">
+            <span data-i18n="collection">Collection</span
+            ><b id="collectionValue">0 / 24</b>
+          </div>
+          <div class="metric">
+            <span data-i18n="packs">Packs</span><b id="packCount">1 🎁</b>
+          </div>
+        </div>
+        <div class="progress"><i id="xpBar" style="width: 0%"></i></div>
+        <div class="mini muted" style="margin-top: 6px">
+          <span data-i18n="xp">XP</span>: <span id="xpValue">0</span> /
+          <span id="xpNext">100</span>
+        </div>
+        <div class="nav">
+          <button
+            id="nav-play"
+            class="secondary active"
+            onclick="show('play')"
+            data-i18n="play"
+          >
+            Play</button
+          ><button
+            id="nav-album"
+            class="secondary"
+            onclick="show('album')"
+            data-i18n="album"
+          >
+            Album</button
+          ><button
+            id="nav-packs"
+            class="secondary"
+            onclick="show('packs')"
+            data-i18n="packsNav"
+          >
+            Packs</button
+          ><button
+            id="nav-trade"
+            class="secondary"
+            onclick="show('trade')"
+            data-i18n="trade"
+          >
+            Trade</button
+          ><button
+            id="nav-profile"
+            class="secondary"
+            onclick="show('profile')"
+            data-i18n="profile"
+          >
+            Profile
+          </button>
+        </div>
+        <section id="play" class="section">
+          <div id="gameBox" class="hero gameBox">
+            <div class="top">
+              <div style="text-align: left">
+                <span class="pill" data-i18n="daily">Daily Challenge</span>
+                <h2 style="margin-top: 10px" data-i18n="rush">Sticker Catch</h2>
+              </div>
+              <div class="gameHud">
+                <div>
+                  <div id="timer" class="timer">30</div>
+                  <div class="mini muted" data-i18n="seconds">seconds</div>
+                </div>
+                <div>
+                  <div class="score">
+                    <span data-i18n="score">Score</span>
+                    <span id="score">0</span>
+                  </div>
+                  <div id="combo" class="combo">Combo x0</div>
+                  <div id="accuracy" class="accuracy">Accuracy 100%</div>
+                </div>
+              </div>
+            </div>
+            <p id="gameHelp" class="muted" data-i18n="gameHelp">
+              Find the target, then master two-sticker sequences. Fast, accurate
+              taps score more. In the final 5-second Fever Mode, mistakes cost
+              one second.
+            </p>
+            <div id="targetPrompt" class="targetPrompt">
+              <div class="label" data-i18n="findThis">Find this sticker</div>
+              <div class="goal">
+                <span id="goalEmoji" class="goalEmoji">🎯</span>
+                <span id="goalSequence" class="sequence hidden"></span>
+                <span id="goalName" class="goalName" data-i18n="ready">Ready?</span>
+              </div>
+            </div>
+            <div id="gameGrid" class="gameGrid"></div>
+            <div id="roundMsg" class="roundMsg muted"></div>
+            <div class="medals">
+              <span>🥉 15</span><span>🥈 25</span><span>🥇 40</span>
+            </div>
+            <button
+              id="startGameBtn"
+              class="primary wide"
+              style="margin-top: 14px"
+              data-i18n="start"
+            >
+              Start daily run
+            </button>
+            <div id="gameResult" class="status"></div>
+          </div>
+          <div class="tile" style="margin-top: 12px">
+            <strong data-i18n="quests">Today’s quests</strong>
+            <div class="quest">
+              <span
+                >⚡
+                <span data-i18n="q1"
+                  >Reach 20 points in Sticker Catch</span
+                ></span
+              ><span id="q1" class="pill">0/20</span>
+            </div>
+            <div class="quest">
+              <span>🎁 <span data-i18n="q2">Open a pack</span></span
+              ><span id="q2" class="pill">0/1</span>
+            </div>
+            <div class="quest">
+              <span
+                >🧩 <span data-i18n="q3">Collect 3 unique stickers</span></span
+              ><span id="q3" class="pill">0/3</span>
+            </div>
+          </div>
+        </section>
+        <section id="album" class="section hidden">
+          <div class="top">
+            <h2 data-i18n="album">Album</h2>
+            <span id="albumProgress" class="pill">0 / 24</span>
+          </div>
+          <div id="albumGrid" class="grid"></div>
+        </section>
+        <section id="packs" class="section hidden">
+          <h2 data-i18n="packsNav">Packs</h2>
+          <div class="tile">
+            <div class="pack">🎁</div>
+            <strong data-i18n="openPack">Open a sticker pack</strong>
+            <p class="muted" data-i18n="openPackSub">
+              Each pack contains 3 stickers. Duplicates become future trade
+              fuel.
+            </p>
+            <button id="openPackBtn" class="secondary wide" data-i18n="open">
+              Open pack
+            </button>
+            <div id="packReveal" class="packReveal"></div>
+            <div id="packSummary" class="packSummary"></div>
+          </div>
+          <div class="tile" style="margin-top: 10px">
+            <div class="pack">✨</div>
+            <strong data-i18n="bonus">Bonus Pack</strong>
+            <p class="muted" data-i18n="bonusSub">
+              Buy one bonus pack for 0.01 Pi.
+            </p>
+            <button id="payBtn" class="primary wide" data-i18n="buy">
+              Buy for 0.01 Pi
+            </button>
+            <div id="paymentStatus" class="status"></div>
+          </div>
+        </section>
+        <section id="trade" class="section hidden">
+          <h2 data-i18n="trade">Trade</h2>
+          <div class="tile">
+            <strong data-i18n="safeTrade">Duplicate Exchange</strong>
+            <p class="muted" data-i18n="safeTradeSub">
+              Your duplicates are tracked now. Peer-to-peer exchange will open
+              after server-side matching, limits and anti-abuse rules are
+              finished.
+            </p>
+            <div id="dupeList"></div>
+          </div>
+          <div class="notice" data-i18n="tradeNotice">
+            No wallet passphrase is ever required. Future trades will use Pi
+            identity and server-verified rules only.
+          </div>
+        </section>
+        <section id="profile" class="section hidden">
+          <h2 data-i18n="profile">Profile</h2>
+          <div id="profileHero" class="tile">
+            <div class="achievement">
+              <div class="icon">🏆</div>
+              <div>
+                <strong id="profileUser">@pioneer</strong
+                ><span class="muted" data-i18n="profileSub"
+                  >Build streaks, complete sets and earn seasonal badges.</span
+                >
+                <span id="masterBadge" class="pill hidden" style="margin-top:10px">🏆 Master Collector · Season 1</span>
+              </div>
+            </div>
+          </div>
+          <div class="dashboard">
+            <div class="metric">
+              <span data-i18n="plays">Runs</span><b id="playsValue">0</b>
+            </div>
+            <div class="metric">
+              <span data-i18n="best">Best score</span><b id="bestValue">0</b>
+            </div>
+            <div class="metric">
+              <span data-i18n="opened">Packs opened</span
+              ><b id="openedValue">0</b>
+            </div>
+            <div class="metric">
+              <span data-i18n="unique">Unique stickers</span
+              ><b id="uniqueValue">0</b>
+            </div>
+          </div>
+          <div class="tile">
+            <strong data-i18n="roadmap">Season roadmap</strong>
+            <p class="muted" data-i18n="roadmapSub">
+              Daily play → sticker sets → duplicate trading → seasonal
+              leaderboard → limited community drops.
+            </p>
+          </div>
+        </section>
+        <footer class="footer">
+          <a href="/privacy.html" data-i18n="privacy">Privacy</a> ·
+          <a href="/terms.html" data-i18n="terms">Terms</a><br /><br />Sticker.pi Mainnet · v1.0.0-rc.1
+        </footer>
+      </section>
+    </main>
+    <div id="albumCelebration" class="celebration hidden" role="dialog" aria-modal="true" aria-labelledby="completionTitle">
+      <div class="celebrationCard">
+        <div class="celebrationIcon">🏆✨</div>
+        <h2 id="completionTitle">Album complete!</h2>
+        <p id="completionText" class="muted">You collected all 24 Season 1 stickers.</p>
+        <p id="completionReward"><b>Master Collector</b><br>+250 XP · +3 celebration packs</p>
+        <button id="closeCelebration" class="primary wide">Continue</button>
+      </div>
+    </div>
+    <script>
+      Pi.init({ version: "2.0", sandbox: false });
+      let authData = null,
+        pendingPayment = null,
+        gameTimer = null,
+        roundTimer = null,
+        gameScore = 0,
+        gameSeconds = 30,
+        currentTarget = 0,
+        targetSequence = [],
+        sequenceStep = 0,
+        gameCombo = 0,
+        bestCombo = 0,
+        gameHits = 0,
+        gameMisses = 0,
+        currentRunId = null,
+        roundStartedAt = 0,
+        roundLocked = false,
+        storageOnline = false,
+        feverMode = false,
+        lastStateError = "";
+      const stickers = [
+        ["🌙", "Moon Dream", "common"],
+        ["🚀", "Pi Rocket", "rare"],
+        ["🐼", "Pioneer Panda", "common"],
+        ["🦊", "Neon Fox", "common"],
+        ["🌍", "Blue Planet", "rare"],
+        ["⚡", "Lightning", "common"],
+        ["🎧", "Night Beats", "common"],
+        ["👑", "Crown Club", "epic"],
+        ["🐉", "Pixel Dragon", "epic"],
+        ["🌈", "Prism", "rare"],
+        ["🛸", "Orbit", "rare"],
+        ["🦉", "Wise Owl", "common"],
+        ["🍉", "Pi Melon", "common"],
+        ["🧿", "Lucky Eye", "rare"],
+        ["🎮", "Arcade", "common"],
+        ["💎", "Genesis Gem", "epic"],
+        ["🪐", "Saturn", "rare"],
+        ["🔥", "Streak Flame", "common"],
+        ["🦁", "Gold Lion", "epic"],
+        ["🎭", "Mask", "rare"],
+        ["🍀", "Lucky Leaf", "common"],
+        ["🧠", "Brainwave", "rare"],
+        ["🪽", "Sky Wing", "epic"],
+        ["⭐", "Founder Star", "legendary"],
+      ];
+      let player = {
+        version: 4,
+        level: 1,
+        xp: 0,
+        streak: 0,
+        lastDaily: null,
+        packs: 1,
+        collection: {},
+        duplicates: {},
+        badges: [],
+        daily: { bestScore: 0, packsOpened: 0, newUnique: 0 },
+        stats: { plays: 0, bestScore: 0, bestCombo: 0, packsOpened: 0 },
+      };
+      const dict = {
+        en: {
+          tag: "Play. Collect. Trade.",
+          hero: "Build your sticker world.",
+          heroSub:
+            "Play fast challenges, open packs, complete albums and build a collection other Pioneers will want to trade for.",
+          login: "Continue with Pi",
+          signed: "Signed in as",
+          reset: "Reset view",
+          level: "Level",
+          streak: "Daily streak",
+          collection: "Collection",
+          packs: "Packs",
+          xp: "XP",
+          play: "Play",
+          album: "Album",
+          packsNav: "Packs",
+          trade: "Trade",
+          profile: "Profile",
+          daily: "Daily Challenge",
+          rush: "Sticker Catch",
+          score: "Score",
+          combo: "Combo",
+          accuracy: "Accuracy",
+          synced: "☁ synced",
+          locked: "Locked",
+          noDupes: "No duplicates yet. Open packs to build trade inventory.",
+          privacy: "Privacy",
+          terms: "Terms",
+          bronzeRun: "Bronze run!",
+          silverRun: "Silver run!",
+          goldRun: "Gold run!",
+          runComplete: "Run complete",
+          albumComplete: "Album complete!",
+          albumCompleteText: "You collected all 24 Season 1 stickers.",
+          continue: "Continue",
+          completionReward: "Master Collector|+250 XP · +3 celebration packs",
+          seconds: "seconds",
+          gameHelp:
+            "Find the target, then master two-sticker sequences. Fast, accurate taps score more. In the final 5-second Fever Mode, mistakes cost one second.",
+          findThis: "Find this sticker",
+          ready: "Ready?",
+          start: "Start daily run",
+          quests: "Today’s quests",
+          q1: "Reach 20 points in Sticker Catch",
+          q2: "Open a pack",
+          q3: "Collect 3 unique stickers",
+          openPack: "Open a sticker pack",
+          openPackSub:
+            "Each pack contains 3 stickers. Duplicates become future trade fuel.",
+          open: "Open pack",
+          bonus: "Bonus Pack",
+          bonusSub: "Buy one bonus pack for 0.01 Pi.",
+          buy: "Buy for 0.01 Pi",
+          safeTrade: "Duplicate Exchange",
+          safeTradeSub:
+            "Your duplicates are tracked now. Peer-to-peer exchange will open after server-side matching, limits and anti-abuse rules are finished.",
+          tradeNotice:
+            "No wallet passphrase is ever required. Future trades will use Pi identity and server-verified rules only.",
+          profileSub: "Build streaks, complete sets and earn seasonal badges.",
+          plays: "Runs",
+          best: "Best score",
+          opened: "Packs opened",
+          unique: "Unique stickers",
+          roadmap: "Season roadmap",
+          roadmapSub:
+            "Daily play → sticker sets → duplicate trading → seasonal leaderboard → limited community drops.",
+        },
+        zh: {
+          tag: "玩 · 收集 · 交换",
+          hero: "打造你的贴纸世界。",
+          heroSub:
+            "完成快速挑战、开启卡包、完成图鉴，并打造其他 Pioneer 想要交换的收藏。",
+          login: "使用 Pi 登录",
+          signed: "当前账户",
+          reset: "重置页面",
+          level: "等级",
+          streak: "连续签到",
+          collection: "收藏",
+          packs: "卡包",
+          xp: "经验",
+          play: "游戏",
+          album: "图鉴",
+          packsNav: "卡包",
+          trade: "交换",
+          profile: "个人资料",
+          daily: "每日挑战",
+          rush: "贴纸捕捉",
+          score: "分数",
+          combo: "连击",
+          accuracy: "准确率",
+          synced: "☁ 已同步",
+          locked: "未解锁",
+          noDupes: "暂无重复贴纸。开启卡包以建立交换库存。",
+          privacy: "隐私政策",
+          terms: "服务条款",
+          bronzeRun: "铜牌挑战！",
+          silverRun: "银牌挑战！",
+          goldRun: "金牌挑战！",
+          runComplete: "挑战完成",
+          albumComplete: "图鉴完成！",
+          albumCompleteText: "你已收集第 1 赛季全部 24 张贴纸。",
+          continue: "继续",
+          completionReward: "收藏大师|+250 经验 · +3 庆祝卡包",
+          seconds: "秒",
+          gameHelp:
+            "找到目标，然后按顺序完成双贴纸挑战。快速准确可获得更多分数。最后 5 秒进入狂热模式，错误会扣除 1 秒。",
+          findThis: "找到这个贴纸",
+          ready: "准备好了吗？",
+          start: "开始每日挑战",
+          quests: "今日任务",
+          q1: "贴纸捕捉达到 20 分",
+          q2: "开启一个卡包",
+          q3: "收集 3 张不同贴纸",
+          openPack: "开启贴纸卡包",
+          openPackSub: "每包包含 3 张贴纸。重复贴纸将用于未来交换。",
+          open: "开启卡包",
+          bonus: "奖励卡包",
+          bonusSub: "使用 0.01 Pi 购买一个奖励卡包。",
+          buy: "用 0.01 Pi 购买",
+          safeTrade: "重复贴纸交换",
+          safeTradeSub:
+            "重复贴纸现已记录。服务器匹配、限额与防滥用规则完成后将开放点对点交换。",
+          tradeNotice:
+            "绝不会要求钱包助记词。未来交换只使用 Pi 身份和服务器验证规则。",
+          profileSub: "保持连续活跃、完成套装并赢得赛季徽章。",
+          plays: "挑战次数",
+          best: "最高分",
+          opened: "已开卡包",
+          unique: "不同贴纸",
+          roadmap: "赛季路线",
+          roadmapSub:
+            "每日挑战 → 贴纸套装 → 重复交换 → 赛季排行榜 → 社区限定掉落。",
+        },
+      };
+      function lang() {
+        return localStorage.getItem("sticker-lang") || "en";
+      }
+      function setLang(l) {
+        localStorage.setItem("sticker-lang", l);
+        document.documentElement.lang = l === "zh" ? "zh" : "en";
+        document.querySelectorAll("[data-i18n]").forEach((el) => {
+          const k = el.dataset.i18n;
+          if (dict[l]?.[k]) el.textContent = dict[l][k];
+        });
+        document.getElementById("enBtn").classList.toggle("active", l === "en");
+        document.getElementById("zhBtn").classList.toggle("active", l === "zh");
+        if (!gameTimer && document.getElementById("goalName"))
+          document.getElementById("goalName").textContent = dict[l].ready;
+        if (document.getElementById("combo")) updateCombo();
+        if (document.getElementById("accuracy")) updateAccuracy();
+        if (document.getElementById("app") && !document.getElementById("app").classList.contains("hidden")) render();
+        document.getElementById("completionTitle").textContent = dict[l].albumComplete;
+        document.getElementById("completionText").textContent = dict[l].albumCompleteText;
+        document.getElementById("closeCelebration").textContent = dict[l].continue;
+        const reward=dict[l].completionReward.split("|");
+        document.getElementById("completionReward").innerHTML=`<b>${reward[0]}</b><br>${reward[1]}`;
+      }
+      setLang(lang());
+      function show(id) {
+        ["play", "album", "packs", "trade", "profile"].forEach((x) => {
+          document.getElementById(x).classList.toggle("hidden", x !== id);
+          document
+            .getElementById("nav-" + x)
+            ?.classList.toggle("active", x === id);
+        });
+        if (id === "album") renderAlbum();
+        if (id === "trade") renderDupes();
+        if (id === "profile") renderStats();
+      }
+      function today() {
+        return new Date().toISOString().slice(0, 10);
+      }
+      function uniqueCount() {
+        return Object.keys(player.collection || {}).filter(
+          (k) => player.collection[k] > 0,
+        ).length;
+      }
+      function calcLevel() {
+        player.level = Math.max(1, Math.floor((player.xp || 0) / 100) + 1);
+      }
+      function saveLocal() {
+        localStorage.setItem("sticker-player", JSON.stringify(player));
+      }
+      function loadLocal() {
+        try {
+          const p = JSON.parse(
+            localStorage.getItem("sticker-player") || "null",
+          );
+          if (p)
+            player = {
+              ...player,
+              ...p,
+              version: 4,
+              daily: { ...player.daily, ...(p.daily || {}) },
+              stats: { ...player.stats, ...(p.stats || {}) },
+            };
+        } catch {}
+      }
+      function render() {
+        calcLevel();
+        document.getElementById("levelValue").textContent = player.level;
+        document.getElementById("streakValue").textContent =
+          (player.streak || 0) + " 🔥";
+        document.getElementById("collectionValue").textContent =
+          uniqueCount() + " / 24";
+        document.getElementById("packCount").textContent =
+          (player.packs || 0) + " 🎁";
+        document.getElementById("xpValue").textContent = player.xp || 0;
+        document.getElementById("xpNext").textContent = player.level * 100;
+        document.getElementById("xpBar").style.width = (player.xp % 100) + "%";
+        document.getElementById("q1").textContent =
+          Math.min(20, player.daily?.bestScore || 0) + "/20";
+        document.getElementById("q2").textContent =
+          Math.min(1, player.daily?.packsOpened || 0) + "/1";
+        document.getElementById("q3").textContent =
+          Math.min(3, player.daily?.newUnique || 0) + "/3";
+        document.getElementById("storageFlag").textContent = storageOnline
+          ? dict[lang()].synced
+          : "device save";
+        renderStats();
+        const isMaster=(player.badges||[]).includes("master_collector_s1");
+        document.getElementById("masterBadge").classList.toggle("hidden",!isMaster);
+        document.getElementById("profileHero").classList.toggle("masterFrame",isMaster);
+        saveLocal();
+      }
+      async function stateApi(action = "load", payload = {}, retry = true) {
+        if (!authData) return;
+        lastStateError = "";
+        try {
+          const r = await fetch("/api/state", {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + authData.accessToken,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ action, ...payload }),
+          });
+          const d = await r.json();
+          if (r.ok && d.player) {
+            storageOnline = !!d.storage;
+            player = {
+              ...player,
+              ...d.player,
+              version: 4,
+              daily: { ...player.daily, ...(d.player.daily || {}) },
+              stats: { ...player.stats, ...(d.player.stats || {}) },
+            };
+            render();
+            return d;
+          }
+          lastStateError = d.error || `Request failed (${r.status})`;
+          if (retry && (r.status === 409 || r.status === 503)) {
+            await new Promise(resolve => setTimeout(resolve, 650));
+            return stateApi(action, payload, false);
+          }
+        } catch (error) { lastStateError = error?.message || "Network error"; }
+        return null;
+      }
+      function showAlbumCelebration() {
+        document.getElementById("albumCelebration").classList.remove("hidden");
+        if (navigator.vibrate) navigator.vibrate([70,40,100,40,140]);
+      }
+      function persist() {
+        render();
+      }
+      function renderAlbum() {
+        const g = document.getElementById("albumGrid");
+        g.innerHTML = "";
+        stickers.forEach((s, i) => {
+          const c = Number(player.collection?.[i] || 0);
+          const el = document.createElement("div");
+          el.className = "stickerCard" + (c ? "" : " locked");
+          el.innerHTML = `<span class="count">${c || "?"}</span><div class="stickerArt">${c ? s[0] : "❔"}</div><div class="stickerName">${c ? s[1] : dict[lang()].locked}</div><div class="rarity">${c ? s[2] : ""}</div>`;
+          g.appendChild(el);
+        });
+        document.getElementById("albumProgress").textContent =
+          uniqueCount() + " / 24";
+      }
+      function renderDupes() {
+        const box = document.getElementById("dupeList");
+        const arr = Object.entries(player.duplicates || {}).filter(
+          ([, n]) => n > 0,
+        );
+        box.innerHTML = arr.length
+          ? arr
+              .map(
+                ([i, n]) =>
+                  `<div class="quest"><span>${stickers[i][0]} ${stickers[i][1]}</span><span class="pill">+${n}</span></div>`,
+              )
+              .join("")
+          : `<p class="muted">${dict[lang()].noDupes}</p>`;
+      }
+      function renderStats() {
+        document.getElementById("playsValue").textContent =
+          player.stats?.plays || 0;
+        document.getElementById("bestValue").textContent =
+          player.stats?.bestScore || 0;
+        document.getElementById("openedValue").textContent =
+          player.stats?.packsOpened || 0;
+        document.getElementById("uniqueValue").textContent = uniqueCount();
+      }
+      function shuffle(a) {
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      }
+      function roundWindow() {
+        if (feverMode) return 850;
+        const elapsed = 30 - gameSeconds;
+        if (elapsed >= 20) return 1200;
+        if (elapsed >= 12) return 1450;
+        if (elapsed >= 6) return 1750;
+        return 2200;
+      }
+      function clearRoundTimer() {
+        if (roundTimer) {
+          clearTimeout(roundTimer);
+          roundTimer = null;
+        }
+      }
+      function chooseTarget() {
+        clearRoundTimer();
+        roundLocked = false;
+        currentTarget = Math.floor(Math.random() * stickers.length);
+        const sequenceMode =
+          feverMode || (gameScore >= 10 && gameCombo >= 3);
+        targetSequence = [currentTarget];
+        if (sequenceMode) {
+          let secondTarget;
+          do secondTarget = Math.floor(Math.random() * stickers.length);
+          while (secondTarget === currentTarget);
+          targetSequence.push(secondTarget);
+        }
+        sequenceStep = 0;
+        renderGoal();
+        const grid = document.getElementById("gameGrid");
+        grid.innerHTML = "";
+        const choices = [...targetSequence];
+        const targetRarity = stickers[currentTarget][2];
+        const preferred = stickers
+          .map((s, i) => ({ i, s }))
+          .filter(
+            (x) => !targetSequence.includes(x.i) && x.s[2] === targetRarity,
+          )
+          .map((x) => x.i);
+        shuffle(preferred);
+        preferred.slice(0, 3).forEach((i) => choices.push(i));
+        while (choices.length < 6) {
+          const n = Math.floor(Math.random() * stickers.length);
+          if (!choices.includes(n)) choices.push(n);
+        }
+        shuffle(choices).forEach((i) => {
+          const b = document.createElement("button");
+          b.className = "target pop";
+          b.textContent = stickers[i][0];
+          b.setAttribute("aria-label", stickers[i][1]);
+          b.onclick = () => tapTarget(i, b);
+          grid.appendChild(b);
+        });
+        roundStartedAt = performance.now();
+        document.getElementById("roundMsg").textContent = feverMode
+          ? lang() === "zh"
+            ? "🔥 狂热模式 — 更快，得分更高！"
+            : "🔥 FEVER MODE — faster rounds, bonus points!"
+          : "";
+        roundTimer = setTimeout(() => {
+          if (!gameTimer || roundLocked) return;
+          roundLocked = true;
+          gameCombo = 0;
+          gameMisses++;
+          updateAccuracy();
+          updateCombo();
+          document.getElementById("roundMsg").textContent =
+            lang() === "zh" ? "太慢了 — 连击中断" : "Too slow — combo broken";
+          setTimeout(chooseTarget, 110);
+        }, roundWindow());
+      }
+      function renderGoal() {
+        const emoji = document.getElementById("goalEmoji");
+        const name = document.getElementById("goalName");
+        const sequence = document.getElementById("goalSequence");
+        const isSequence = targetSequence.length > 1;
+        emoji.classList.toggle("hidden", isSequence);
+        name.classList.toggle("hidden", isSequence);
+        sequence.classList.toggle("hidden", !isSequence);
+        if (!isSequence) {
+          emoji.textContent = stickers[targetSequence[0]][0];
+          name.textContent = stickers[targetSequence[0]][1];
+          return;
+        }
+        sequence.innerHTML = targetSequence
+          .map(
+            (target, index) =>
+              `<span class="sequenceStep ${index < sequenceStep ? "done" : index === sequenceStep ? "current" : ""}">${stickers[target][0]}</span>`,
+          )
+          .join('<span class="muted">→</span>');
+      }
+      function updateCombo() {
+        document.getElementById("combo").textContent =
+          (feverMode ? "🔥 " : "") + dict[lang()].combo + " x" + gameCombo;
+      }
+      function updateAccuracy() {
+        const attempts = gameHits + gameMisses;
+        const accuracy = attempts ? Math.round((gameHits / attempts) * 100) : 100;
+        document.getElementById("accuracy").textContent =
+          dict[lang()].accuracy + " " + accuracy + "%";
+      }
+      function tapTarget(i, b) {
+        if (!gameTimer || roundLocked) return;
+        clearRoundTimer();
+        const expectedTarget = targetSequence[sequenceStep];
+        if (i === expectedTarget) {
+          gameHits++;
+          b.classList.add("good");
+          if (sequenceStep < targetSequence.length - 1) {
+            sequenceStep++;
+            renderGoal();
+            document.getElementById("roundMsg").textContent =
+              lang() === "zh" ? "正确 — 下一个！" : "Good — now the next one!";
+            roundTimer = setTimeout(() => {
+              if (!gameTimer || roundLocked) return;
+              roundLocked = true;
+              gameCombo = 0;
+              gameMisses++;
+              updateAccuracy();
+              updateCombo();
+              document.getElementById("roundMsg").textContent =
+                lang() === "zh" ? "太慢了 — 连击中断" : "Too slow — combo broken";
+              setTimeout(chooseTarget, 110);
+            }, Math.max(450, roundWindow() * 0.72));
+            updateAccuracy();
+            return;
+          }
+          roundLocked = true;
+          gameCombo++;
+          bestCombo = Math.max(bestCombo, gameCombo);
+          let bonus = 1;
+          const reactionTime = performance.now() - roundStartedAt;
+          if (reactionTime < (targetSequence.length > 1 ? 850 : 600)) bonus++;
+          if (gameCombo >= 8) bonus++;
+          if (feverMode) bonus++;
+          gameScore += bonus;
+          document.getElementById("score").textContent = gameScore;
+          updateAccuracy();
+          updateCombo();
+          document.getElementById("roundMsg").textContent =
+            bonus > 1
+              ? `Fast! +${bonus} • Combo x${gameCombo}`
+              : `Nice! +1 • Combo x${gameCombo}`;
+          setTimeout(chooseTarget, feverMode ? 90 : 140);
+        } else {
+          roundLocked = true;
+          gameMisses++;
+          gameCombo = 0;
+          if (feverMode) {
+            gameSeconds = Math.max(0, gameSeconds - 1);
+            if (gameSeconds === 0) {
+              document.getElementById("timer").textContent = "0";
+              finishGame();
+              return;
+            }
+          }
+          document.getElementById("timer").textContent = gameSeconds;
+          updateAccuracy();
+          updateCombo();
+          b.classList.add("bad");
+          document.getElementById("roundMsg").textContent =
+            lang() === "zh"
+              ? "连击中断 — 再试一次"
+              : feverMode
+                ? "Wrong sticker — combo lost, -1 second"
+                : "Wrong sticker — combo lost";
+          setTimeout(chooseTarget, 220);
+        }
+      }
+      async function startGame() {
+        if (gameTimer) return;
+        const startButton = document.getElementById("startGameBtn");
+        startButton.disabled = true;
+        document.getElementById("gameResult").textContent =
+          lang() === "zh" ? "正在准备安全挑战…" : "Preparing verified run…";
+        const started = await stateApi("start_run");
+        if (!started?.runId) {
+          startButton.disabled = false;
+          document.getElementById("gameResult").textContent =
+            lang() === "zh"
+              ? "无法开始挑战，请稍后重试。"
+              : "Run could not start. Please try again.";
+          return;
+        }
+        clearRoundTimer();
+        gameScore = 0;
+        gameCombo = 0;
+        bestCombo = 0;
+        gameHits = 0;
+        gameMisses = 0;
+        currentRunId = started.runId;
+        gameSeconds = 30;
+        feverMode = false;
+        document.getElementById("gameBox").classList.remove("fever");
+        document.getElementById("score").textContent = "0";
+        document.getElementById("timer").textContent = "30";
+        document.getElementById("gameResult").textContent = "";
+        document.getElementById("startGameBtn").disabled = true;
+        updateAccuracy();
+        updateCombo();
+        chooseTarget();
+        gameTimer = setInterval(() => {
+          gameSeconds--;
+          document.getElementById("timer").textContent = gameSeconds;
+          if (gameSeconds === 5 && !feverMode) {
+            feverMode = true;
+            document.getElementById("gameBox").classList.add("fever");
+            updateCombo();
+            document.getElementById("roundMsg").textContent =
+              lang() === "zh"
+                ? "🔥 狂热模式！最后冲刺！"
+                : "🔥 FEVER MODE! Final push!";
+            if (!roundLocked) chooseTarget();
+          }
+          if (gameSeconds <= 0) finishGame();
+        }, 1000);
+      }
+      async function finishGame() {
+        clearInterval(gameTimer);
+        gameTimer = null;
+        clearRoundTimer();
+        roundLocked = true;
+        document.getElementById("gameBox").classList.remove("fever");
+        document.getElementById("startGameBtn").disabled = false;
+        document.getElementById("gameGrid").innerHTML = "";
+        document.getElementById("goalSequence").classList.add("hidden");
+        document.getElementById("goalEmoji").classList.remove("hidden");
+        document.getElementById("goalName").classList.remove("hidden");
+        document.getElementById("goalEmoji").textContent = "🏁";
+        document.getElementById("goalName").textContent =
+          gameScore >= 40
+            ? dict[lang()].goldRun
+            : gameScore >= 25
+              ? dict[lang()].silverRun
+              : gameScore >= 15
+                ? dict[lang()].bronzeRun
+                : dict[lang()].runComplete;
+        const attempts = gameHits + gameMisses;
+        const accuracy = attempts ? Math.round((gameHits / attempts) * 100) : 100;
+        document.getElementById("gameResult").textContent = "Saving verified result…";
+        document.getElementById("roundMsg").textContent = "";
+        const d = await stateApi("record_run", {
+          runId: currentRunId,
+          score: gameScore,
+          bestCombo,
+          hits: gameHits,
+          misses: gameMisses,
+        });
+        if (d) {
+          const reward = d.packGranted ? " • +1 daily pack 🎁" : "";
+          document.getElementById("gameResult").textContent = lang() === "zh"
+            ? `分数 ${gameScore} • 准确率 ${accuracy}% • 最高连击 x${bestCombo} • +${d.xp} 经验${d.packGranted ? " • +1 每日卡包 🎁" : ""}`
+            : `Score ${gameScore} • Accuracy ${accuracy}% • Best combo x${bestCombo} • +${d.xp} XP${reward}`;
+        } else {
+          document.getElementById("gameResult").textContent =
+            (lang() === "zh" ? "结果无法验证，进度未更改。" : "Result could not be verified. Your saved progress was not changed.") +
+            (lastStateError ? ` (${lastStateError})` : "");
+        }
+      }
+      function weightedSticker() {
+        const r = Math.random();
+        let pool;
+        if (r < 0.04)
+          pool = stickers
+            .map((s, i) => [s, i])
+            .filter(([s]) => s[2] === "legendary");
+        else if (r < 0.18)
+          pool = stickers
+            .map((s, i) => [s, i])
+            .filter(([s]) => s[2] === "epic");
+        else if (r < 0.48)
+          pool = stickers
+            .map((s, i) => [s, i])
+            .filter(([s]) => s[2] === "rare");
+        else
+          pool = stickers
+            .map((s, i) => [s, i])
+            .filter(([s]) => s[2] === "common");
+        return pool[Math.floor(Math.random() * pool.length)][1];
+      }
+      async function openPack() {
+        if ((player.packs || 0) < 1) return;
+        const button = document.getElementById("openPackBtn");
+        button.disabled = true;
+        button.textContent = lang() === "zh" ? "正在开启…" : "Opening…";
+        document.getElementById("packReveal").innerHTML = "";
+        document.getElementById("packSummary").textContent = "";
+        const openId =
+          globalThis.crypto?.randomUUID?.() ||
+          `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const d = await stateApi("open_pack", { openId });
+        button.disabled = false;
+        button.textContent = dict[lang()].open;
+        if (!d?.reveal) return;
+        if (d.albumCompleted) showAlbumCelebration();
+        const box = document.getElementById("packReveal");
+        box.innerHTML = "";
+        const cards = d.cards || d.reveal.map((index) => ({ index, isNew: false }));
+        cards.forEach((card, n) => {
+          const i = card.index;
+          const el = document.createElement("div");
+          el.className = `stickerCard rarity-${stickers[i][2]}`;
+          el.style.animationDelay = n * 0.28 + "s";
+          const badge = card.isNew
+            ? `<span class="revealBadge">${lang() === "zh" ? "新" : "NEW"}</span>`
+            : `<span class="revealBadge dupe">${lang() === "zh" ? "重复" : "DUPLICATE"}</span>`;
+          el.innerHTML = `${badge}<div class="stickerArt">${stickers[i][0]}</div><div class="stickerName">${stickers[i][1]}</div><div class="rarity">${stickers[i][2]}</div>`;
+          box.appendChild(el);
+          requestAnimationFrame(() => el.classList.add("revealed"));
+        });
+        const newCount = cards.filter((card) => card.isNew).length;
+        const bestRarity = cards.some((card) => stickers[card.index][2] === "legendary")
+          ? "legendary"
+          : cards.some((card) => stickers[card.index][2] === "epic")
+            ? "epic"
+            : cards.some((card) => stickers[card.index][2] === "rare")
+              ? "rare"
+              : "common";
+        setTimeout(() => {
+          document.getElementById("packSummary").textContent =
+            lang() === "zh"
+              ? `新增 ${newCount} 张 • 最高稀有度：${bestRarity.toUpperCase()} • +15 XP`
+              : `${newCount} new • Best rarity: ${bestRarity.toUpperCase()} • +15 XP`;
+          if (newCount > 0 && navigator.vibrate) navigator.vibrate([35, 30, 55]);
+        }, 850);
+      }
+      function setPaymentStatus(t) {
+        document.getElementById("paymentStatus").textContent = t || "";
+      }
+      async function api(body) {
+        const r = await fetch("/api/auth", {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + authData.accessToken,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || "Request failed");
+        return d;
+      }
+      async function recoverIncomplete() {
+        if (!pendingPayment || !authData) return;
+        try {
+          setPaymentStatus("Recovering incomplete payment…");
+          const d = await api({
+            action: "recover",
+            paymentId: pendingPayment.identifier || pendingPayment.paymentId,
+          });
+          if (d.completed) {
+            setPaymentStatus("Previous payment completed ✓");
+            if (d.player) {
+              player = { ...player, ...d.player };
+              render();
+            }
+          }
+        } catch (e) {
+          setPaymentStatus(e.message);
+        }
+      }
+      async function login() {
+        const b = document.getElementById("loginBtn");
+        try {
+          b.disabled = true;
+          authData = await Pi.authenticate(
+            ["username", "payments"],
+            (payment) => {
+              pendingPayment = payment;
+            },
+          );
+          const r = await fetch("/api/auth", {
+            method: "POST",
+            headers: { Authorization: "Bearer " + authData.accessToken },
+          });
+          const d = await r.json();
+          if (!r.ok) throw new Error(d.error || "Authentication failed");
+          document.getElementById("username").textContent =
+            "@" + d.user.username;
+          document.getElementById("profileUser").textContent =
+            "@" + d.user.username;
+          document.getElementById("loggedOut").classList.add("hidden");
+          document.getElementById("app").classList.remove("hidden");
+          loadLocal();
+          render();
+          await stateApi("load");
+          if (uniqueCount() === 24 && !(player.badges || []).includes("master_collector_s1")) {
+            const completion = await stateApi("claim_album_reward");
+            if (completion?.albumCompleted) showAlbumCelebration();
+          }
+          await recoverIncomplete();
+        } catch (e) {
+          alert(e.message);
+          b.disabled = false;
+        }
+      }
+      async function buyPack() {
+        if (!authData) return;
+        const b = document.getElementById("payBtn");
+        b.disabled = true;
+        setPaymentStatus("Opening Pi payment…");
+        try {
+          await Pi.createPayment(
+            {
+              amount: 0.01,
+              memo: "Sticker.pi Bonus Pack",
+              metadata: { product: "sticker_bonus_pack_mainnet_v1" },
+            },
+            {
+              onReadyForServerApproval: async (paymentId) => {
+                setPaymentStatus("Approving payment…");
+                await api({ action: "approve", paymentId });
+              },
+              onReadyForServerCompletion: async (paymentId, txid) => {
+                setPaymentStatus("Verifying transaction…");
+                const d = await api({ action: "complete", paymentId, txid });
+                if (d.completed) {
+                  setPaymentStatus("Payment complete ✓ Bonus pack unlocked");
+                  if (d.player) {
+                    player = { ...player, ...d.player };
+                    render();
+                  }
+                  b.textContent = "Purchased ✓";
+                }
+              },
+              onCancel: () => {
+                setPaymentStatus("Payment cancelled");
+                b.disabled = false;
+              },
+              onError: (error) => {
+                setPaymentStatus(error?.message || "Payment error");
+                b.disabled = false;
+              },
+            },
+          );
+        } catch (e) {
+          setPaymentStatus(e.message);
+          b.disabled = false;
+        }
+      }
+      document.getElementById("loginBtn").onclick = login;
+      document.getElementById("logoutBtn").onclick = () => location.reload();
+      document.getElementById("payBtn").onclick = buyPack;
+      document.getElementById("startGameBtn").onclick = startGame;
+      document.getElementById("openPackBtn").onclick = openPack;
+      document.getElementById("closeCelebration").onclick = () => document.getElementById("albumCelebration").classList.add("hidden");
+      renderAlbum();
+    </script>
+  </body>
+</html>

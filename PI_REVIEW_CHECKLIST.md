@@ -1,27 +1,40 @@
-# Sticker.pi — Mainnet Readiness Checklist
+# Sticker.pi — Mainnet Review Checklist
 
-## Isolation
+## Verified configuration
 
-- [x] Separate GitHub repository
-- [ ] Separate Vercel project and production URL
-- [ ] Separate Mainnet Pi app and API key
-- [ ] Separate connected Mainnet wallet
-- [ ] Separate Upstash database and token
+- [x] Separate Mainnet GitHub repository
+- [x] Separate Mainnet Vercel project and production URL
+- [x] Paired Mainnet Pi app and Mainnet API key
+- [x] Connected Mainnet app wallet
+- [x] Mainnet Redis namespace and server-authoritative storage
 - [x] Pi SDK configured with `sandbox: false`
-- [x] Payment network restricted to `Pi Network`
-- [x] Mainnet-only product identifier and Redis namespace
+- [x] Payment restricted to `user_to_app`, `Pi Network`, 0.01 Pi and the Mainnet product identifier
+- [x] Domain ownership validated
+- [x] PiNet subdomain created
+- [x] Pi SDK authentication completed in Pi Browser
+- [x] Real 0.01 Pi U2A purchase completed
+- [x] Purchased pack granted exactly once
+- [x] Privacy and Terms routes available
+- [x] Release version aligned to `v1.0.0`
 
-## Verification before submission
+## Repository safeguards
 
-- [ ] Configure the Mainnet development/production URL
-- [ ] Verify domain ownership
-- [ ] Confirm Pi authentication in Pi Browser
-- [ ] Confirm fresh Mainnet player state (no Testnet data)
-- [ ] Complete one authorized 0.01 Pi U2A purchase
-- [ ] Confirm exactly one pack is granted after server verification
-- [ ] Confirm payment recovery and idempotency
-- [ ] Recheck Privacy Policy and Terms URLs
-- [ ] Run the complete gameplay, pack and album smoke test
-- [ ] Freeze the accepted commit and promote version to `1.0.0`
+- [x] No API keys, wallet passphrases, private keys or seed phrases committed
+- [x] Server verifies Pi identity before state or payment actions
+- [x] Payment approval, completion and incomplete-payment recovery implemented
+- [x] Payment and reward fulfillment are idempotent
+- [x] Gameplay uses server-issued run identifiers and plausibility checks
+- [x] Player mutations use locks and rate limits
+- [x] Trade is explicitly marked “Coming soon”
+- [x] Mainnet contains no Testnet payment constants
 
-Do not submit Mainnet for review until every item above is complete.
+## Final manual checks immediately before submission
+
+- [ ] Open the latest Vercel production deployment in Pi Browser
+- [ ] Confirm footer displays `Sticker.pi Mainnet · v1.0.0`
+- [ ] Confirm login, one full run, pack opening, Album and Profile
+- [ ] Confirm Trade displays “Coming soon” and performs no transfer
+- [ ] Confirm Privacy and Terms links open
+- [ ] Confirm listing subtitle and description describe only active features
+- [ ] Confirm listing screenshots match the current build
+- [ ] Freeze the reviewed commit/deployment

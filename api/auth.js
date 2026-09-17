@@ -6,9 +6,17 @@ const AMOUNT=0.01;
 const PRODUCT='sticker_bonus_pack_mainnet_v1';
 const MEMO='Sticker.pi Bonus Pack';
 
+async function piFailure(r,stage){
+  const text=await r.text();
+  let detail='';
+  try{const data=JSON.parse(text);detail=data?.error_message||data?.error||''}catch{detail=text}
+  const e=new Error(`${stage} failed (${r.status})${detail?`: ${String(detail).slice(0,180)}`:''}`);
+  e.status=r.status;
+  throw e;
+}
 async function getPayment(id,key){
-  const r=await fetch(`${PI_API_BASE}/payments/${encodeURIComponent(id)}`,{headers:{Authorization:`Key ${key}`}});
-  if(!r.ok){const e=new Error('Unable to load payment');e.status=r.status;throw e}
+  const r=await fetch(`${PI_API_BASE}/payments/${encodeURIComponent(id)}`,{headers:{Authorization:`Key ${key}`},cache:'no-store'});
+  if(!r.ok)await piFailure(r,'Pi payment lookup');
   return r.json();
 }
 
@@ -18,7 +26,7 @@ function validPayment(p,uid){
 
 async function approve(id,key){
   const r=await fetch(`${PI_API_BASE}/payments/${encodeURIComponent(id)}/approve`,{method:'POST',headers:{Authorization:`Key ${key}`}});
-  if(!r.ok){const t=await r.text();if(!t.includes('already_approved')){const e=new Error('Payment approval failed');e.status=r.status;throw e}}
+  if(!r.ok){const clone=r.clone(),t=await clone.text();if(!t.includes('already_approved'))await piFailure(r,'Pi payment approval')}
 }
 
 async function cancel(id,key){
@@ -60,5 +68,9 @@ export default async function handler(req,res){
     if(!validPayment(p,user.uid)||!p.status?.developer_completed||!p.status?.transaction_verified)return res.status(409).json({success:false,pending:true,error:'Payment not fully verified yet'});
     const grant=await grantPaidPack(user.uid,user.username,paymentId);
     return res.status(200).json({success:true,completed:true,product:PRODUCT,paymentId,player:grant.player,alreadyGranted:grant.alreadyGranted});
-  }catch(error){return apiError(res,error)}
+  }catch(error){
+    const status=Number(error?.status);
+    const safeStatus=Number.isFinite(status)&&status>=400&&status<500?status:502;
+    return res.status(safeStatus).json({success:false,error:error?.message||'Payment service error'});
+  }
 }

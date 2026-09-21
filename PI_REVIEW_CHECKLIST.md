@@ -24,6 +24,8 @@
 - [x] Payment approval, completion and incomplete-payment recovery implemented
 - [x] Payment and reward fulfillment are idempotent
 - [x] Gameplay uses server-issued run identifiers and plausibility checks
+- [x] Daily challenge uses a server-issued environment-specific deterministic seed
+- [x] Top 10 stores only each Pioneer’s best verified UTC-day result
 - [x] Player mutations use locks and rate limits
 - [x] Trade is explicitly marked “Coming soon”
 - [x] Mainnet contains no Testnet payment constants
@@ -33,6 +35,7 @@
 - [ ] Open the latest Vercel production deployment in Pi Browser
 - [ ] Confirm footer displays `Sticker.pi Mainnet · v1.0.0`
 - [ ] Confirm login, one full run, pack opening, Album and Profile
+- [ ] Confirm Top 10 and personal daily rank update after a verified run
 - [ ] Confirm Trade displays “Coming soon” and performs no transfer
 - [ ] Confirm Privacy and Terms links open
 - [ ] Confirm listing subtitle and description describe only active features

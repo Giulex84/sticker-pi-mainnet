@@ -13,7 +13,8 @@ This repository and deployment are Mainnet-only. They must never share a Vercel 
 ## Active features
 
 - Pi SDK authentication in Pi Browser with server-side `/v2/me` identity verification
-- 30-second Sticker Catch challenge with short-lived server-issued run identifiers
+- Daily 30-second Sticker Catch challenge with a server-issued deterministic seed and short-lived run identifier
+- Daily Top 10 ranked by verified score, accuracy and best combo, with personal position
 - Server-authoritative XP, levels, streaks, quests, packs and collection state
 - 24-sticker Season 1 album with rarity and duplicate tracking
 - One-time server-verified Master Collector reward
@@ -29,7 +30,7 @@ This repository and deployment are Mainnet-only. They must never share a Vercel 
 
 Peer-to-peer duplicate exchange is **not active**. The Trade screen is informational and clearly marked “Coming soon”. Duplicates are tracked only for a future server-verified exchange feature.
 
-A2U rewards, leaderboards and seasonal community drops are not active in this Mainnet release.
+A2U rewards and seasonal community drops are not active in this Mainnet release.
 
 ## Pi integration boundaries
 
@@ -60,3 +61,4 @@ Never commit credentials or reuse Testnet values.
 - Terms: https://sticker-pi-mainnet.vercel.app/terms.html
 
 Daily state resets at `00:00 UTC`; it is not a rolling 24-hour timer.
+Daily leaderboard entries are retained temporarily and only the best verified result per Pioneer per UTC day is ranked.

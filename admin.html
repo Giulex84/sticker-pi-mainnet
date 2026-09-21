@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive"><title>Sticker.pi Metrics</title>
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <style>
+    :root{color-scheme:dark;--bg:#090b18;--panel:#151934;--panel2:#0d1126;--line:#343b70;--muted:#a9afd1;--mint:#4de1cf;--gold:#ffca54}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0,#263878 0,#101735 34%,var(--bg) 72%);color:#f7f8ff;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{width:min(1050px,100%);margin:auto;padding:calc(26px + env(safe-area-inset-top)) 20px calc(40px + env(safe-area-inset-bottom))}.hero{display:flex;align-items:center;gap:18px;margin:12px 0 28px}.icon{display:grid;place-items:center;width:86px;height:86px;border-radius:25px;background:linear-gradient(135deg,#7567ff,#42dacb);font-size:42px}.hero h1{margin:0;font-size:clamp(28px,6vw,48px)}.hero p{margin:7px 0 0;color:var(--muted);font-size:18px}.badge{margin-left:auto;border:1px solid #25a7b9;border-radius:999px;color:var(--mint);padding:12px 20px;font-weight:700}.panel{border:1px solid var(--line);border-radius:34px;background:#11162ee8;padding:28px}.toolbar{display:flex;justify-content:space-between;gap:14px;margin-bottom:24px}select,button{border:1px solid var(--line);border-radius:20px;background:#171c38;color:#fff;padding:15px 20px;font:inherit;font-size:18px}button{cursor:pointer}.status{min-height:24px;color:var(--muted);margin:0 0 18px}.status.error{color:#ff9da9}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.metric{min-height:125px;border:1px solid #2c335c;border-radius:26px;background:#191f3d;padding:20px;color:var(--muted)}.metric b{display:block;margin-top:10px;color:#fff;font-size:38px;font-weight:500}.table-wrap{margin-top:28px;overflow:auto;border:1px solid var(--line);border-radius:24px}table{width:100%;min-width:850px;border-collapse:collapse;background:#10152d}th,td{padding:17px 15px;border-bottom:1px solid #23294b;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--muted);background:#0b1025;position:sticky;top:0}.login{display:grid;place-items:center;min-height:55vh;text-align:center}.login button{background:linear-gradient(90deg,#7b63ff,#43dbc8);color:#080b18;border:0;font-weight:800}.hidden{display:none!important}@media(max-width:700px){.wrap{padding-left:14px;padding-right:14px}.hero{gap:12px}.icon{width:70px;height:70px}.hero p{font-size:15px}.badge{padding:9px 12px}.panel{padding:20px 14px;border-radius:27px}.cards{grid-template-columns:repeat(2,1fr)}.metric{min-height:112px;padding:17px 15px}.metric b{font-size:34px}.toolbar{align-items:stretch}select,button{padding:14px 15px;font-size:16px}}
+  </style>
+</head>
+<body><main class="wrap">
+  <section class="hero"><div class="icon">📊</div><div><h1>Sticker.pi Metrics</h1><p>Private aggregate telemetry</p></div><span class="badge">ADMIN</span></section>
+  <section id="login" class="panel login"><div><h2>Owner access</h2><p class="status">Verify your Pi account to view private metrics.</p><button id="verify">VERIFY WITH PI</button></div></section>
+  <section id="dashboard" class="panel hidden">
+    <div class="toolbar"><select id="days"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option></select><button id="refresh">Refresh</button></div>
+    <p id="status" class="status"></p>
+    <div class="cards">
+      <div class="metric">DAILY UNIQUES (SUM)<b id="unique">0</b></div><div class="metric">LOGINS<b id="logins">0</b></div>
+      <div class="metric">RUNS STARTED<b id="started">0</b></div><div class="metric">RUNS COMPLETED<b id="completed">0</b></div>
+      <div class="metric">PACKS OPENED<b id="packs">0</b></div><div class="metric">PAID PACKS<b id="sales">0</b></div>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>UTC day</th><th>Users</th><th>Logins</th><th>Runs start</th><th>Runs complete</th><th>Packs opened</th><th>Paid packs</th><th>Albums</th></tr></thead><tbody id="rows"></tbody></table></div>
+  </section>
+</main><script>
+  Pi.init({version:'2.0',sandbox:false});
+  let accessToken='';
+  const $=id=>document.getElementById(id),sum=(rows,key)=>rows.reduce((n,row)=>n+Number(row.events?.[key]||0),0);
+  function showError(message){$('status').textContent=message;$('status').classList.add('error')}
+  async function load(){
+    $('status').classList.remove('error');$('status').textContent='Loading…';
+    try{
+      const response=await fetch(`/api/metrics?days=${$('days').value}`,{headers:{Authorization:`Bearer ${accessToken}`},cache:'no-store'}),data=await response.json();
+      if(!response.ok)throw new Error(data.error||'Metrics request failed');
+      const rows=data.rows||[];$('unique').textContent=rows.reduce((n,row)=>n+Number(row.uniqueUsers||0),0);$('logins').textContent=sum(rows,'login');$('started').textContent=sum(rows,'run_started');$('completed').textContent=sum(rows,'run_completed');$('packs').textContent=sum(rows,'pack_opened');$('sales').textContent=sum(rows,'paid_pack_purchased');
+      $('rows').innerHTML=rows.map(row=>`<tr><td>${row.day}</td><td>${row.uniqueUsers||0}</td><td>${row.events?.login||0}</td><td>${row.events?.run_started||0}</td><td>${row.events?.run_completed||0}</td><td>${row.events?.pack_opened||0}</td><td>${row.events?.paid_pack_purchased||0}</td><td>${row.events?.album_completed||0}</td></tr>`).join('');
+      $('status').textContent=`Updated ${new Date(data.generatedAt).toLocaleString()}`;
+    }catch(error){showError(error.message)}
+  }
+  $('verify').onclick=async()=>{try{const auth=await Pi.authenticate(['username'],()=>{});accessToken=auth.accessToken;$('login').classList.add('hidden');$('dashboard').classList.remove('hidden');await load()}catch(error){alert(error?.message||'Pi authentication failed')}};
+  $('refresh').onclick=load;$('days').onchange=load;
+</script></body></html>

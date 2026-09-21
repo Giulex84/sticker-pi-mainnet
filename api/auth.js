@@ -1,5 +1,6 @@
 import {verifyPiUser,apiError} from '../lib/pi.js';
 import {grantPaidPack,rateLimit} from '../lib/store.js';
+import {safeRecordMetric} from '../lib/metrics.js';
 
 const PI_API_BASE='https://api.minepi.com/v2';
 const AMOUNT=0.01;
@@ -45,7 +46,7 @@ export default async function handler(req,res){
     const user=await verifyPiUser(req);
     await rateLimit(user.uid,'payment',20,60);
     const body=req.body||{};
-    if(!body.action)return res.status(200).json({success:true,user:{uid:user.uid,username:user.username}});
+    if(!body.action){await safeRecordMetric(user.uid,'login');return res.status(200).json({success:true,user:{uid:user.uid,username:user.username}})}
     const apiKey=(process.env.PI_API_KEY||'').trim();
     if(!apiKey)return res.status(503).json({success:false,error:'Payment service unavailable'});
     const {action,paymentId,txid}=body;
@@ -67,6 +68,7 @@ export default async function handler(req,res){
     p=await getPayment(paymentId,apiKey);
     if(!validPayment(p,user.uid)||!p.status?.developer_completed||!p.status?.transaction_verified)return res.status(409).json({success:false,pending:true,error:'Payment not fully verified yet'});
     const grant=await grantPaidPack(user.uid,user.username,paymentId);
+    if(!grant.alreadyGranted)await safeRecordMetric(user.uid,'paid_pack_purchased',paymentId);
     return res.status(200).json({success:true,completed:true,product:PRODUCT,paymentId,player:grant.player,alreadyGranted:grant.alreadyGranted});
   }catch(error){
     const status=Number(error?.status);

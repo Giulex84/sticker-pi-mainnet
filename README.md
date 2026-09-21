@@ -23,6 +23,7 @@ This repository and deployment are Mainnet-only. They must never share a Vercel 
 - Per-player mutation locks and API rate limits
 - English and Simplified Chinese interface
 - Privacy Policy and Terms of Service
+- Privacy-preserving aggregate backend telemetry with a Pi-owner-only dashboard at `/admin.html`
 
 ## Coming soon
 
@@ -48,6 +49,8 @@ The app uses Pi SDK authentication inside Pi Browser. The separate OAuth-based P
 - `PI_API_KEY` — API key belonging only to the paired Mainnet app
 - `UPSTASH_REDIS_REST_URL` — Mainnet storage endpoint
 - `UPSTASH_REDIS_REST_TOKEN` — Mainnet storage token
+- `STICKER_ADMIN_USERNAME` — optional dashboard owner username (defaults to `Giulex84`)
+- `STICKER_METRICS_SECRET` — optional dedicated HMAC secret (falls back to `PI_API_KEY`)
 
 Never commit credentials or reuse Testnet values.
 

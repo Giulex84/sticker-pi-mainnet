@@ -4,7 +4,7 @@ Sticker.pi is a Pi Network collectible skill game built around short daily chall
 
 ## Production status
 
-Current release: **v1.0.0**
+Current release: **v1.0.1**
 
 Production URL: https://sticker-pi-mainnet.vercel.app
 

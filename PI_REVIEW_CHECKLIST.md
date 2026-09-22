@@ -15,7 +15,7 @@
 - [x] Real 0.01 Pi U2A purchase completed
 - [x] Purchased pack granted exactly once
 - [x] Privacy and Terms routes available
-- [x] Release version aligned to `v1.0.0`
+- [x] Release version aligned to `v1.0.1`
 
 ## Repository safeguards
 
@@ -33,7 +33,7 @@
 ## Final manual checks immediately before submission
 
 - [ ] Open the latest Vercel production deployment in Pi Browser
-- [ ] Confirm footer displays `Sticker.pi Mainnet · v1.0.0`
+- [ ] Confirm footer displays `Sticker.pi Mainnet · v1.0.1`
 - [ ] Confirm login, one full run, pack opening, Album and Profile
 - [ ] Confirm Top 10 and personal daily rank update after a verified run
 - [ ] Confirm Trade displays “Coming soon” and performs no transfer

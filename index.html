@@ -259,6 +259,8 @@
       .leaderboard li:last-child { border-bottom: 0; }
       .leaderboard b { color: var(--text); }
       .leaderboard small { float: right; color: var(--gold); }
+      .goalDone { color: var(--good) !important; border-color: var(--good) !important; }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } .packReveal .stickerCard { opacity: 1; transform: none; } }
       .pill {
         display: inline-block;
         border: 1px solid var(--line);
@@ -753,13 +755,16 @@
           </div>
           <div class="tile" style="margin-top: 12px">
             <strong data-i18n="quests">Today’s quests</strong>
+            <p id="dailyGoalHint" class="muted mini" aria-live="polite"></p>
+            <button id="nextGoalBtn" class="secondary wide" onclick="showNextGoal()"></button>
+            <p class="muted mini" id="dailyResetHint"></p>
             <div class="quest">
               <span
                 >⚡
                 <span data-i18n="q1"
-                  >Reach 20 points in Sticker Catch</span
+                  >Reach 25 points to earn your daily pack</span
                 ></span
-              ><span id="q1" class="pill">0/20</span>
+              ><span id="q1" class="pill">0/25</span>
             </div>
             <div class="quest">
               <span>🎁 <span data-i18n="q2">Open a pack</span></span
@@ -777,6 +782,7 @@
             <h2 data-i18n="album">Album</h2>
             <span id="albumProgress" class="pill">0 / 24</span>
           </div>
+          <p id="albumGoalHint" class="muted" aria-live="polite"></p>
           <div id="albumGrid" class="grid"></div>
         </section>
         <section id="packs" class="section hidden">
@@ -807,19 +813,16 @@
           </div>
         </section>
         <section id="trade" class="section hidden">
-          <h2 data-i18n="tradeComingSoon">Trade · Coming soon</h2>
+          <h2 data-i18n="tradeComingSoon">Your duplicates</h2>
           <div class="tile">
             <strong data-i18n="safeTrade">Duplicate tracking</strong>
             <p class="muted" data-i18n="safeTradeSub">
-              Your duplicates are tracked now. Peer-to-peer exchange will open
-              after server-side matching, limits and anti-abuse rules are
-              finished.
+              Keep track of extra copies in your collection. Trading is not available yet.
             </p>
             <div id="dupeList"></div>
           </div>
           <div class="notice" data-i18n="tradeNotice">
-            No wallet passphrase is ever required. Future trades will use Pi
-            identity and server-verified rules only.
+            Trading coming soon. Your extra copies stay in your collection.
           </div>
         </section>
         <section id="profile" class="section hidden">
@@ -830,7 +833,7 @@
               <div>
                 <strong id="profileUser">@pioneer</strong
                 ><span class="muted" data-i18n="profileSub"
-                  >Build streaks, complete sets and earn seasonal badges.</span
+                  >Play each day, grow your album and unlock the Master Collector badge.</span
                 >
                 <span id="masterBadge" class="pill hidden" style="margin-top:10px">🏆 Master Collector · Season 1</span>
               </div>
@@ -853,16 +856,15 @@
             </div>
           </div>
           <div class="tile">
-            <strong data-i18n="roadmap">Season roadmap</strong>
+            <strong data-i18n="roadmap">Your album goal</strong>
             <p class="muted" data-i18n="roadmapSub">
-              Daily play → sticker sets → duplicate trading → seasonal
-              leaderboard → limited community drops.
+              Collect all 24 stickers to unlock Master Collector, 250 XP and 3 celebration packs. Earn a free daily pack by scoring 25 points.
             </p>
           </div>
         </section>
         <footer class="footer">
           <a href="/privacy.html" data-i18n="privacy">Privacy</a> ·
-          <a href="/terms.html" data-i18n="terms">Terms</a><br /><br />Sticker.pi Mainnet · v1.0.1
+          <a href="/terms.html" data-i18n="terms">Terms</a><br /><br />Sticker.pi Mainnet · v1.0.2
         </footer>
       </section>
     </main>
@@ -953,8 +955,8 @@
           play: "Play",
           album: "Album",
           packsNav: "Packs",
-          trade: "Trade",
-          tradeComingSoon: "Trade · Coming soon",
+          trade: "Duplicates",
+          tradeComingSoon: "Your duplicates",
           profile: "Profile",
           daily: "Daily Challenge",
           rush: "Sticker Catch",
@@ -984,7 +986,7 @@
           dailyRankings: "Today’s Top 10",
           noRankings: "No verified runs yet",
           yourRank: "Your rank",
-          q1: "Reach 20 points in Sticker Catch",
+          q1: "Reach 25 points to earn your daily pack",
           q2: "Open a pack",
           q3: "Collect 3 unique stickers",
           openPack: "Open a sticker pack",
@@ -996,17 +998,17 @@
           buy: "Buy for 0.01 Pi",
           safeTrade: "Duplicate tracking",
           safeTradeSub:
-            "Your duplicates are tracked now. Peer-to-peer exchange will open after server-side matching, limits and anti-abuse rules are finished.",
+            "Keep track of extra copies in your collection. Trading is not available yet.",
           tradeNotice:
-            "No wallet passphrase is ever required. Future trades will use Pi identity and server-verified rules only.",
-          profileSub: "Build streaks, complete sets and earn seasonal badges.",
+            "Trading coming soon. Your extra copies stay in your collection.",
+          profileSub: "Play each day, grow your album and unlock the Master Collector badge.",
           plays: "Runs",
           best: "Best score",
           opened: "Packs opened",
           unique: "Unique stickers",
-          roadmap: "Season roadmap",
+          roadmap: "Your album goal",
           roadmapSub:
-            "Daily play → sticker sets → future duplicate exchange → seasonal leaderboard → limited community drops.",
+            "Collect all 24 stickers to unlock Master Collector, 250 XP and 3 celebration packs. Earn a free daily pack by scoring 25 points.",
         },
         zh: {
           tag: "玩 · 收集 · 完成",
@@ -1024,8 +1026,8 @@
           play: "游戏",
           album: "图鉴",
           packsNav: "卡包",
-          trade: "交换",
-          tradeComingSoon: "交换 · 即将推出",
+          trade: "重复贴纸",
+          tradeComingSoon: "你的重复贴纸",
           profile: "个人资料",
           daily: "每日挑战",
           rush: "贴纸捕捉",
@@ -1055,7 +1057,7 @@
           dailyRankings: "今日前十名",
           noRankings: "暂无已验证成绩",
           yourRank: "你的排名",
-          q1: "贴纸捕捉达到 20 分",
+          q1: "达到 25 分，获得每日卡包",
           q2: "开启一个卡包",
           q3: "收集 3 张不同贴纸",
           openPack: "开启贴纸卡包",
@@ -1066,17 +1068,17 @@
           buy: "用 0.01 Pi 购买",
           safeTrade: "重复贴纸记录",
           safeTradeSub:
-            "重复贴纸现已记录。服务器匹配、限额与防滥用规则完成后将开放点对点交换。",
+            "查看收藏中的额外副本。交换功能尚未开放。",
           tradeNotice:
-            "绝不会要求钱包助记词。未来交换只使用 Pi 身份和服务器验证规则。",
-          profileSub: "保持连续活跃、完成套装并赢得赛季徽章。",
+            "交换功能即将推出。额外副本会保留在你的收藏中。",
+          profileSub: "每日挑战，完善图鉴，解锁收藏大师徽章。",
           plays: "挑战次数",
           best: "最高分",
           opened: "已开卡包",
           unique: "不同贴纸",
-          roadmap: "赛季路线",
+          roadmap: "你的图鉴目标",
           roadmapSub:
-            "每日挑战 → 贴纸套装 → 未来重复贴纸交换 → 赛季排行榜 → 社区限定掉落。",
+            "收集全部 24 张贴纸，解锁收藏大师、250 经验和 3 个庆祝卡包。每日达到 25 分可获得免费卡包。",
         },
       };
       function lang() {
@@ -1156,7 +1158,7 @@
         document.getElementById("xpNext").textContent = player.level * 100;
         document.getElementById("xpBar").style.width = (player.xp % 100) + "%";
         document.getElementById("q1").textContent =
-          Math.min(20, player.daily?.bestScore || 0) + "/20";
+          Math.min(25, player.daily?.bestScore || 0) + "/25";
         document.getElementById("q2").textContent =
           Math.min(1, player.daily?.packsOpened || 0) + "/1";
         document.getElementById("q3").textContent =
@@ -1164,11 +1166,36 @@
         document.getElementById("storageFlag").textContent = storageOnline
           ? dict[lang()].synced
           : "device save";
+        renderGoals();
         renderStats();
         const isMaster=(player.badges||[]).includes("master_collector_s1");
         document.getElementById("masterBadge").classList.toggle("hidden",!isMaster);
         document.getElementById("profileHero").classList.toggle("masterFrame",isMaster);
         saveLocal();
+      }
+      function showNextGoal() {
+        show((player.packs || 0) > 0 ? "packs" : !player.daily?.runPackGranted ? "play" : "album");
+      }
+      function renderGoals() {
+        const zh = lang() === "zh", earned = !!player.daily?.runPackGranted;
+        document.getElementById("q1").textContent = earned ? "✓" : Math.min(25, player.daily?.bestScore || 0) + "/25";
+        for (const id of ["q2", "q3"]) {
+          const complete = id === "q2" ? (player.daily?.packsOpened || 0) >= 1 : (player.daily?.newUnique || 0) >= 3;
+          document.getElementById(id).classList.toggle("goalDone", complete);
+        }
+        document.getElementById("q1").classList.toggle("goalDone", earned);
+        document.getElementById("dailyGoalHint").textContent = earned
+          ? (zh ? "今日免费卡包已获得。再次挑战可提高今日排名。" : "Daily free pack earned. Play again to improve your daily rank.")
+          : (zh ? "达到 25 分可获得 1 个免费卡包，每日一次。" : "Score 25 to earn 1 free pack, once per day.");
+        document.getElementById("nextGoalBtn").textContent = (player.packs || 0) > 0
+          ? (zh ? "开启可用卡包" : "Open your available packs")
+          : !earned ? (zh ? "挑战每日卡包" : "Play for your daily pack")
+          : (zh ? "查看图鉴进度" : "View your album progress");
+        document.getElementById("dailyResetHint").textContent = zh ? "每日挑战于 00:00 UTC 重置。连续天数以完成挑战为准。" : "Daily challenges reset at 00:00 UTC. Complete a run each day to build your streak.";
+        const remaining = Math.max(0, 24 - uniqueCount());
+        document.getElementById("albumGoalHint").textContent = remaining
+          ? (zh ? `还差 ${remaining} 张即可获得收藏大师、250 经验和 3 个卡包。` : `${remaining} stickers to Master Collector: +250 XP and +3 packs.`)
+          : (zh ? "24/24：图鉴完成！" : "24/24: album complete!");
       }
       async function stateApi(action = "load", payload = {}, retry = true) {
         if (!authData) return;
@@ -1654,11 +1681,10 @@
             "@" + d.user.username;
           document.getElementById("profileUser").textContent =
             "@" + d.user.username;
+          const initialState = await stateApi("load");
+          if (!initialState?.player) throw new Error(lastStateError || "Could not load your saved progress. Please sign in again.");
           document.getElementById("loggedOut").classList.add("hidden");
           document.getElementById("app").classList.remove("hidden");
-          loadLocal();
-          render();
-          await stateApi("load");
           await loadDailyLeaderboard();
           if (uniqueCount() === 24 && !(player.badges || []).includes("master_collector_s1")) {
             const completion = await stateApi("claim_album_reward");

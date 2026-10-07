@@ -1,7 +1,7 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),crypto=require('node:crypto');
 const html=fs.readFileSync('index.html','utf8'),script=html.match(/<script>\s*([\s\S]*?)<\/script>/)[1];
 const elements=new Map(),cache=new Map(),requests=[];let approve=true,loseResponse=false;let saved={uid:'tester',collection:{0:5},duplicates:{0:4},packs:0,daily:{bestScore:0,newUnique:0,packsOpened:0},stats:{}};
-function element(id){if(!elements.has(id))elements.set(id,{focus(){},textContent:'',innerHTML:'',style:{},children:[],classList:{toggle(){},add(){},remove(){},contains(){return true}},appendChild(x){this.children.push(x)}});return elements.get(id)}
+function element(id){if(!elements.has(id))elements.set(id,{setAttribute(){},focus(){},textContent:'',innerHTML:'',style:{},children:[],classList:{toggle(){},add(){},remove(){},contains(){return true}},appendChild(x){this.children.push(x)}});return elements.get(id)}
 const ctx={Pi:{init(){}},document:{addEventListener(){},body:{style:{}},documentElement:{},getElementById:element,querySelectorAll(){return[]},createElement(){return {children:[],appendChild(x){this.children.push(x)}}}},localStorage:{getItem:k=>cache.get(k)||null,setItem:(k,v)=>cache.set(k,v),removeItem:k=>cache.delete(k)},crypto:{randomUUID:crypto.randomUUID},confirm:text=>{assert.match(text,/4 duplicate copies/);assert.match(text,/4 × Moon Dream/);return approve},navigator:{},location:{},console,queueMicrotask,setTimeout,clearTimeout,setInterval,clearInterval,requestAnimationFrame:f=>f(),fetch:async(url,options)=>{
   assert.equal(url,'/api/state');const body=JSON.parse(options.body);requests.push(body);
   let d;

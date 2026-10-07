@@ -4,7 +4,7 @@ Sticker.pi is a Pi SDK collectible skill game with daily challenges and permanen
 
 ## Release and deployment
 
-- Release: **v1.1.0**
+- Release: **v1.1.1**
 - App: https://sticker-pi-mainnet.vercel.app
 - Private metrics: https://sticker-pi-mainnet.vercel.app/admin.html
 - Mainnet-only repository and Vercel project. Testnet credentials, wallets and storage must remain separate.
@@ -76,3 +76,9 @@ Terms: https://sticker-pi-mainnet.vercel.app/terms.html
 Run npm test for mocked UI, state and API tests, including migration, album isolation, starter and completion rewards, replay, lost responses, concurrency, conversion confirmation and legacy/new payment routing. Run node check-admin.cjs for dashboard aggregation tests.
 
 A live authenticated Pi Browser check is still required for mobile appearance and actual album-2 purchase completion. Automated tests do not execute live payments.
+
+## Gameplay XP packs (v1.1.1)
+
+Verified run XP advances a separate 500-XP pack meter. Up to three XP packs can be earned per UTC day, in addition to the existing daily score pack. Partial progress carries to the next day; after the cap, further run XP increases the level only and does not advance the pack meter. Packs belong to the album selected at run start. Opening packs and completing albums do not advance this meter. Existing level XP is preserved and is not backfilled into the new meter.
+
+The admin dashboard reports XP packs and player-days with one versus two or more completed runs. New telemetry begins at release; it does not measure multi-day retention.

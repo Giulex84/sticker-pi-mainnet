@@ -96,3 +96,18 @@ console.log('Album 2 tests passed: legacy migration, unlock, starter once, separ
 p=await seed(Object.fromEntries(Array.from({length:24},(_,i)=>[i,1])));d=await selectPlayerAlbum(uid,name,2);d.player.collection[24]=5;await savePlayer(d.player);plan=quoteDuplicateConversion(d.player,26);await selectPlayerAlbum(uid,name,1);
 d=await convertDuplicates(uid,name,request(plan,'cross_tab_recovery_01'));assert.equal(d.target,26);assert.equal(d.albumId,2);assert.equal(d.player.activeAlbum,1);assert.equal(d.player.collection[24],1);assert.equal(d.player.collection[26],1);
 console.log('Cross-tab conversion recovery remains bound to the confirmed album.');
+async function verifiedRun(id,{score=30,bestCombo=0,hits=20,misses=0,albumId=1}={}){
+  const p=await getPlayer(uid,name);p.activeRun={id,startedAt:Date.now()-30000,day:serverDay(),albumId};await savePlayer(p);
+  return recordRun(uid,name,{runId:id,score,bestCombo,hits,misses});
+}
+p=await seed({0:1});p.xp=969;delete p.packXpProgress;await savePlayer(p);p=await getPlayer(uid,name);assert.equal(p.packXpProgress,0);assert.equal(p.xp,969);
+p.packXpProgress=429;await savePlayer(p);d=await verifiedRun('xp-before-threshold');assert.equal(d.xp,70);assert.equal(d.xpPacksGranted,0);assert.equal(d.player.packXpProgress,499);
+d=await verifiedRun('xp-cross-threshold');assert.equal(d.xpPacksGranted,1);assert.equal(d.player.packXpProgress,69);assert.equal(d.player.daily.xpPacksGranted,1);const xpPackBalance=d.player.packs;
+d=await recordRun(uid,name,{runId:'xp-cross-threshold',score:30,bestCombo:0,hits:20,misses:0});assert.equal(d.alreadyRecorded,true);assert.equal(d.player.packs,xpPackBalance);assert.equal(d.player.packXpProgress,69);
+p=d.player;p.packXpProgress=490;p.daily.xpPacksGranted=2;await savePlayer(p);d=await verifiedRun('xp-third-pack');assert.equal(d.xpPacksGranted,1);assert.equal(d.player.daily.xpPacksGranted,3);assert.equal(d.player.packXpProgress,60);
+d=await verifiedRun('xp-after-cap');assert.equal(d.xpPacksGranted,0);assert.equal(d.player.packXpProgress,60);assert.equal(d.player.daily.xpPacksGranted,3);
+p=d.player;p.packXpProgress=490;p.daily.date=new Date(Date.now()-86400000).toISOString().slice(0,10);await savePlayer(p);
+d=await verifiedRun('xp-next-day',{score:10,hits:10});assert.equal(d.xpPacksGranted,1);assert.equal(d.player.packXpProgress,20);assert.equal(d.player.daily.xpPacksGranted,1);
+// Pack-opening and album XP never advance gameplay pack progress.
+p=await seed(Object.fromEntries(Array.from({length:24},(_,i)=>[i,1])));p.packXpProgress=499;await savePlayer(p);d=await openPlayerPack(uid,name,{openId:'non-gameplay-xp'});assert.equal(d.player.packXpProgress,499);assert.equal(d.player.daily.xpPacksGranted,0);
+console.log('XP pack tests passed: no retroactive XP, threshold and remainder, replay, daily cap, UTC rollover/carry and exclusion of pack/album XP.');

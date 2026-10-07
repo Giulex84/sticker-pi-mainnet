@@ -764,6 +764,12 @@
             </button>
             <div id="gameResult" class="status"></div>
           </div>
+          <div class="tile" style="margin-top:12px">
+            <div class="top"><strong id="xpPackTitle">Next free pack</strong><span id="xpPackDaily" class="pill"></span></div>
+            <p id="xpPackProgressText" class="muted"></p>
+            <div id="xpPackProgress" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="500"><i id="xpPackBar"></i></div>
+            <p id="xpPackHelp" class="mini muted"></p>
+          </div>
           <div class="tile leaderboard">
             <div class="top"><strong data-i18n="dailyRankings">Today’s Top 10</strong><span id="dailyPosition" class="pill"></span></div>
             <ol id="dailyLeaders"><li data-i18n="noRankings">No verified runs yet</li></ol>
@@ -884,7 +890,7 @@
         </section>
         <footer class="footer">
           <a href="/privacy.html" data-i18n="privacy">Privacy</a> ·
-          <a href="/terms.html" data-i18n="terms">Terms</a><br /><br />Sticker.pi Mainnet · v1.1.0
+          <a href="/terms.html" data-i18n="terms">Terms</a><br /><br />Sticker.pi Mainnet · v1.1.1
         </footer>
       </section>
     </main>
@@ -1251,6 +1257,7 @@
           ? dict[lang()].synced
           : "device save";
         renderAlbumSelector();
+        renderXpPackProgress();
         renderGoals();
         renderStats();
         const isMaster=(player.badges||[]).includes(albumBadge());
@@ -1260,6 +1267,19 @@
       }
       function showNextGoal() {
         show((player.packs || 0) > 0 ? "packs" : !player.daily?.runPackGranted ? "play" : "album");
+      }
+      function renderXpPackProgress(){
+        const zh=lang()==="zh",progress=Math.max(0,Math.min(499,Number(player.packXpProgress)||0)),earned=Number(player.daily?.xpPacksGranted)||0;
+        document.getElementById("xpPackTitle").textContent=zh?"下一个免费卡包":"Next free pack";
+        document.getElementById("xpPackDaily").textContent=zh?`今日获得 ${earned}/3`:`${earned}/3 earned today`;
+        document.getElementById("xpPackProgressText").textContent=earned>=3
+          ? (zh?"今日 XP 卡包已领满。剩余进度已保存。":"Today's XP pack limit reached. Your partial progress is saved.")
+          : (zh?`${progress}/500 游戏经验 · 还差 ${500-progress} 经验`:`${progress}/500 gameplay XP · ${500-progress} XP to your next pack`);
+        document.getElementById("xpPackBar").style.width=(progress/500*100)+"%";
+        document.getElementById("xpPackProgress").setAttribute("aria-valuenow",String(progress));
+        document.getElementById("xpPackHelp").textContent=zh
+          ? "仅已验证挑战的经验计入；每日最多 3 包。开启卡包和图鉴奖励不计入。达到上限后挑战仍提供等级经验。进度跨日保留，奖励属于开始挑战时选定的图鉴。"
+          : "Verified run XP only; up to 3 packs per UTC day. Pack openings and album rewards do not count. After the limit, runs still earn level XP. Partial progress carries over; rewards go to the album selected when the run starts.";
       }
       function renderGoals() {
         const zh = lang() === "zh", earned = !!player.daily?.runPackGranted;
@@ -1727,9 +1747,9 @@
           misses: gameMisses,
         });
         if (d) {
-          const reward = d.packGranted ? " • +1 daily pack 🎁" : "";
+          const reward = (d.packGranted ? " • +1 daily pack 🎁" : "") + (d.xpPacksGranted ? ` • +${d.xpPacksGranted} XP pack 🎁` : "");
           document.getElementById("gameResult").textContent = lang() === "zh"
-            ? `分数 ${gameScore} • 准确率 ${accuracy}% • 最高连击 x${bestCombo} • +${d.xp} 经验${d.packGranted ? " • +1 每日卡包 🎁" : ""}`
+            ? `分数 ${gameScore} • 准确率 ${accuracy}% • 最高连击 x${bestCombo} • +${d.xp} 经验${d.packGranted ? " • +1 每日卡包 🎁" : ""}${d.xpPacksGranted ? ` • +${d.xpPacksGranted} XP 卡包 🎁` : ""}`
             : `Score ${gameScore} • Accuracy ${accuracy}% • Best combo x${bestCombo} • +${d.xp} XP${reward}`;
           await loadDailyLeaderboard();
         } else {

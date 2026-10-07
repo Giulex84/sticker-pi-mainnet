@@ -1,6 +1,6 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const html=fs.readFileSync('index.html','utf8'),script=html.match(/<script>\s*([\s\S]*?)<\/script>/)[1];
-const els=new Map();function el(id){if(!els.has(id))els.set(id,{focus(){},textContent:'',innerHTML:'',style:{},classList:{toggle(){},add(){},remove(){},contains(){return false}},appendChild(){}});return els.get(id)}
+const els=new Map();function el(id){if(!els.has(id))els.set(id,{setAttribute(){},focus(){},textContent:'',innerHTML:'',style:{},classList:{toggle(){},add(){},remove(){},contains(){return false}},appendChild(){}});return els.get(id)}
 const ctx={Pi:{init(){}},document:{addEventListener(){},body:{style:{}},documentElement:{},getElementById:el,querySelectorAll(){return[]},createElement(){return {className:'',innerHTML:''}}},localStorage:{getItem(){return 'en'},setItem(){}},navigator:{},location:{},console,queueMicrotask,setTimeout,clearTimeout,setInterval,clearInterval,requestAnimationFrame:f=>f()};
 vm.createContext(ctx);vm.runInContext(script+';globalThis.check={set:p=>{player={...player,...p};render()},next:showNextGoal};',ctx);
 ctx.check.set({packs:0,collection:{0:1},daily:{bestScore:20,runPackGranted:false,packsOpened:0,newUnique:0}});
@@ -16,3 +16,8 @@ ctx.check.set({activeAlbum:2,packs:1,collection:{...Object.fromEntries(Array.fro
 assert.equal(el('collectionValue').textContent,'2 / 24');assert.match(el('albumGoalHint').textContent,/22 stickers to Ocean Collector/);assert.match(el('activeAlbumHint').textContent,/Ocean Wonders/);assert.equal(el('uniqueValue').textContent,26);assert.equal(el('album2Btn').disabled,false);
 assert(html.includes('id="conversionDialog"'));assert(!script.includes('if(!confirm('));assert(script.includes('albumId:activeAlbum()'));
 console.log('Album UI tests passed: per-album collection, total profile count, unlock label, purchase album metadata and custom confirmation dialog.');
+ctx.check.set({packXpProgress:320,daily:{xpPacksGranted:1}});
+assert.match(el('xpPackProgressText').textContent,/180 XP/);assert.equal(el('xpPackBar').style.width,'64%');assert.equal(el('xpPackDaily').textContent,'1/3 earned today');
+ctx.check.set({packXpProgress:320,daily:{xpPacksGranted:3}});
+assert.match(el('xpPackProgressText').textContent,/limit reached/);
+console.log('XP pack UI passed: remaining XP, progress bar, daily count and cap message.');

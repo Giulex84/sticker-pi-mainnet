@@ -27,9 +27,13 @@
       <div class="metric">DUPLICATE CONVERSIONS<b id="conversions">0</b><small>Missing stickers obtained through conversion.</small></div>
       <div class="metric">ALBUMS COMPLETED<b id="albums">0</b><small>Album completion events, including conversion.</small></div>
       <div class="metric">RUNS / ACTIVE USER-DAY<b id="runsPerDay">—</b><small>Completed runs divided by the sum of daily users.</small></div>
+      <div class="metric">XP PACKS EARNED<b id="xpPacks">0</b><small>Free packs awarded through verified gameplay XP.</small></div>
+      <div class="metric">PLAYER-DAYS WITH A RUN<b id="playingDays">0</b><small>Players with at least one completed run, counted per UTC day.</small></div>
+      <div class="metric">PLAYER-DAYS WITH 2+ RUNS<b id="repeatDays">0</b><small>Players who completed a second run that day.</small></div>
+      <div class="metric">SECOND-RUN RATE<b id="repeatRate">—</b><small>Repeat player-days divided by player-days with a run. Not multi-day retention.</small></div>
     </div>
-    <p class="note">All cards except “Active today” use the selected period. Counts are aggregate event telemetry, not an inventory audit. Delivery and conversion events are deduplicated; telemetry is best effort and can miss events. Distinct daily users are approximate. Conversion tracking began with v1.0.3 on October 7, 2026.</p>
-    <div class="table-wrap"><table><thead><tr><th>UTC day</th><th>Active users</th><th>Logins</th><th>Runs start</th><th>Runs complete</th><th>Packs opened</th><th>Paid packs</th><th>Volume · Pi</th><th>Conversions</th><th>Albums</th></tr></thead><tbody id="rows"></tbody></table></div>
+    <p class="note">All cards except “Active today” use the selected period. Counts are aggregate event telemetry, not an inventory audit. Delivery and conversion events are deduplicated; telemetry is best effort and can miss events. Distinct daily users are approximate. Conversion tracking began with v1.0.3; XP pack and repeat-play tracking began with v1.1.1 on October 7, 2026. Earlier activity is not backfilled.</p>
+    <div class="table-wrap"><table><thead><tr><th>UTC day</th><th>Active users</th><th>Logins</th><th>Runs start</th><th>Runs complete</th><th>Packs opened</th><th>Paid packs</th><th>Volume · Pi</th><th>Conversions</th><th>Albums</th><th>XP packs</th><th>Players with run</th><th>Players with 2+ runs</th></tr></thead><tbody id="rows"></tbody></table></div>
   </section>
 </main><script>
   Pi.init({version:'2.0',sandbox:false});
@@ -49,12 +53,15 @@
       $('unique').textContent=unique;$('logins').textContent=sum(rows,'login');$('started').textContent=started;$('completed').textContent=completed;
       $('packs').textContent=sum(rows,'pack_opened');$('sales').textContent=sales;$('volume').textContent=(sales*0.01).toFixed(2);
       $('conversions').textContent=sum(rows,'duplicates_converted');$('albums').textContent=sum(rows,'album_completed');
+      const playingDays=sum(rows,'player_first_run'),repeatDays=sum(rows,'player_repeat_run');
+      $('xpPacks').textContent=sum(rows,'xp_pack_earned');$('playingDays').textContent=playingDays;$('repeatDays').textContent=repeatDays;
+      $('repeatRate').textContent=playingDays?(repeatDays/playingDays*100).toFixed(1)+'%':'—';
       $('runRatio').textContent=started?(completed/started*100).toFixed(1)+'%':'—';
       $('runsPerDay').textContent=unique?(completed/unique).toFixed(2):'—';
       $('rows').replaceChildren();
       for(const row of rows){
         const tr=document.createElement('tr'),events=row.events||{};
-        const cells=[row.day,number(row.uniqueUsers),number(events.login),number(events.run_started),number(events.run_completed),number(events.pack_opened),number(events.paid_pack_purchased),(number(events.paid_pack_purchased)*0.01).toFixed(2),number(events.duplicates_converted),number(events.album_completed)];
+        const cells=[row.day,number(row.uniqueUsers),number(events.login),number(events.run_started),number(events.run_completed),number(events.pack_opened),number(events.paid_pack_purchased),(number(events.paid_pack_purchased)*0.01).toFixed(2),number(events.duplicates_converted),number(events.album_completed),number(events.xp_pack_earned),number(events.player_first_run),number(events.player_repeat_run)];
         for(const value of cells){const td=document.createElement('td');td.textContent=String(value??'');tr.appendChild(td)}
         $('rows').appendChild(tr);
       }

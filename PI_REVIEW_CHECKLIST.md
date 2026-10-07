@@ -78,3 +78,11 @@ The admin dashboard reports XP packs and player-days with one versus two or more
 - [ ] Recheck both albums and the mobile admin dashboard after refreshing the production page
 
 These checks do not certify historical production records or replace the existing manual payment checks. No live payment was executed by the regression suite.
+
+## Four-goal daily bonus
+
+- [x] One extra pack per UTC day, committed with the qualifying run and its receipt
+- [x] Run-bound album, lost-response retry, XP-cap independence and UTC reset tested locally
+- [ ] Verify 4/4 bonus and two-line leaderboard rows in Pi Browser
+
+Players already at 4/4 receive the bonus on their next valid run that UTC day. No payment or extra XP is required.

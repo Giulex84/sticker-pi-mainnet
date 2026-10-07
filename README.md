@@ -83,7 +83,7 @@ Verified run XP advances a separate 500-XP pack meter. Up to three XP packs can 
 
 The admin dashboard reports XP packs and player-days with one versus two or more completed runs. New telemetry begins at release; it does not measure multi-day retention.
 
-Daily skill goals: complete three verified runs, reach 90% accuracy with at least 20 attempts in one run, and reach a 15-hit combo. These goals grant no additional packs. Existing daily and 500 XP pack rewards are unchanged. Accuracy uses the unrounded ratio, floored for display; counters reset at 00:00 UTC.
+Daily skill goals: complete three verified runs, reach 90% accuracy with at least 20 attempts in one run, and reach a 15-hit combo. Completing all four daily goals (including the 25-point daily pack goal) grants one additional pack per UTC day, atomically with the qualifying run, to the album bound to that run. The bonus is separate from the three-pack XP cap and grants no XP. Existing users who already completed all four goals receive the bonus on their next valid run that UTC day. The server persists the reward flag with inventory and the run receipt; retries cannot grant it twice. Existing daily and 500 XP pack rewards are unchanged. Accuracy uses the unrounded ratio, floored for display; counters reset at 00:00 UTC.
 
 
 ## Mainnet persistence and recovery

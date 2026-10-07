@@ -35,9 +35,9 @@ Verified run XP advances a separate 500-XP pack meter. Up to three XP packs can 
 
 The admin dashboard reports XP packs and player-days with one versus two or more completed runs. New telemetry begins at release; it does not measure multi-day retention.
 
-Daily skill goals: complete three verified runs, reach 90% accuracy with at least 20 attempts in one run, and reach a 15-hit combo. These goals grant no additional packs. Existing daily and 500 XP pack rewards are unchanged. Accuracy uses the unrounded ratio, floored for display; counters reset at 00:00 UTC.
+Daily skill goals: complete three verified runs, reach 90% accuracy with at least 20 attempts in one run, and reach a 15-hit combo. Completing all four daily goals, including the 25-point score reward, grants one extra pack per UTC day to the album bound to the qualifying run. Existing 4/4 players receive it on their next valid run. Inventory, reward flag and run receipt are committed together, preventing retry duplication. Existing daily and 500 XP pack rewards are unchanged. Accuracy uses the unrounded ratio, floored for display; counters reset at 00:00 UTC.
 
 
 ## Recovery safeguards
 
-Inventory writes reject stale lock owners and changed snapshots. New pack openings keep durable receipts beyond the recent receipt cache. Lost opening and payment-completion replies can be recovered without starting a second operation. Unreadable player records are preserved for review rather than reset. Daily ranking writes compare the best result atomically; retries of newly recorded runs repair a ranking failure without granting progression twice. Prices, album unlocks and reward quantities are unchanged.
+Inventory writes reject stale lock owners and changed snapshots. New pack openings keep durable receipts beyond the recent receipt cache. Lost opening and payment-completion replies can be recovered without starting a second operation. Unreadable player records are preserved for review rather than reset. Daily ranking writes compare the best result atomically; retries of newly recorded runs repair a ranking failure without granting progression twice. Prices and album unlocks are unchanged.

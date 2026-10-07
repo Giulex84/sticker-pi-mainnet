@@ -267,8 +267,8 @@
       .leaderboard ol { margin: 0; padding-left: 25px; color: var(--muted); }
       .leaderboard li { padding: 7px 0; border-bottom: 1px solid #28305b; }
       .leaderboard li:last-child { border-bottom: 0; }
-      .leaderboard b { color: var(--text); }
-      .leaderboard small { float: right; color: var(--gold); }
+      .leaderboard b { display: block; color: var(--text); overflow-wrap: anywhere; }
+      .leaderboard small { display: block; margin-top: 4px; color: var(--gold); overflow-wrap: anywhere; }
       .quest:has(.goalDone) { padding-top: 8px; padding-bottom: 8px; font-size: .9em; }
       .goalDone { color: var(--good) !important; border-color: var(--good) !important; }
       @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } .packReveal .stickerCard { opacity: 1; transform: none; } }
@@ -1294,7 +1294,11 @@
         let completed=earned?1:0;
         ["q2","q3","q4"].forEach((id,i)=>{const done=values[i]>=targets[i];completed+=done?1:0;const el=document.getElementById(id);el.textContent=done?"✓":`${values[i]}/${targets[i]}${i===1?"%":""}`;el.classList.toggle("goalDone",done);});
         document.getElementById("comboGoalLabel").textContent=zh?"🔥 达到 15 连击":"🔥 Reach a 15-hit combo";
-        document.getElementById("skillGoalHelp").textContent=zh?"技能目标没有额外卡包奖励；挑战经验计入 500 XP 卡包进度。":"Skill goals award no extra packs. Run XP counts toward your next 500 XP pack.";
+        document.getElementById("skillGoalHelp").textContent=player.daily?.goalsPackGranted
+          ? (zh?`每日目标奖励已获得：图鉴 ${player.daily.goalsPackAlbum||1} +1 卡包。`:`Daily goals bonus earned: +1 pack for Album ${player.daily.goalsPackAlbum||1}.`)
+          : completed===4
+            ? (zh?"再完成一次挑战即可领取 +1 目标奖励卡包，每 UTC 日一次。":"Complete your next run to receive +1 goals bonus pack, once per UTC day.")
+            : (zh?"完成全部 4 个目标可额外获得 1 卡包，每 UTC 日一次，奖励属于完成挑战时使用的图鉴。":"Complete all 4 goals to earn +1 bonus pack, once per UTC day, for the album used in the qualifying run.");
         document.getElementById("completedGoals").textContent=zh?`已完成 ${completed}/4 个目标`:`${completed}/4 goals completed`;
         document.getElementById("q1").classList.toggle("goalDone", earned);
         document.getElementById("dailyGoalHint").textContent = earned
@@ -1757,9 +1761,9 @@
           misses: gameMisses,
         });
         if (d) {
-          const reward = (d.packGranted ? " • +1 daily pack 🎁" : "") + (d.xpPacksGranted ? ` • +${d.xpPacksGranted} XP pack 🎁` : "");
+          const reward = (d.packGranted ? " • +1 daily pack 🎁" : "") + (d.xpPacksGranted ? ` • +${d.xpPacksGranted} XP pack 🎁` : "") + (d.goalsPackGranted ? " • +1 goals bonus pack 🎁" : "");
           document.getElementById("gameResult").textContent = lang() === "zh"
-            ? `分数 ${gameScore} • 准确率 ${accuracy}% • 最高连击 x${bestCombo} • +${d.xp} 经验${d.packGranted ? " • +1 每日卡包 🎁" : ""}${d.xpPacksGranted ? ` • +${d.xpPacksGranted} XP 卡包 🎁` : ""}`
+            ? `分数 ${gameScore} • 准确率 ${accuracy}% • 最高连击 x${bestCombo} • +${d.xp} 经验${d.packGranted ? " • +1 每日卡包 🎁" : ""}${d.xpPacksGranted ? ` • +${d.xpPacksGranted} XP 卡包 🎁` : ""}${d.goalsPackGranted ? " • +1 目标奖励卡包 🎁" : ""}`
             : `Score ${gameScore} • Accuracy ${accuracy}% • Best combo x${bestCombo} • +${d.xp} XP${reward}`;
           await loadDailyLeaderboard();
         } else {

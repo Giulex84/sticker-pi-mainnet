@@ -25,6 +25,9 @@ console.log('XP pack UI passed: remaining XP, progress bar, daily count and cap 
 ctx.check.set({daily:{runsCompleted:3,bestEligibleAccuracy:90,bestCombo:15,runPackGranted:true}});
 for(const id of ['q1','q2','q3','q4'])assert.equal(el(id).textContent,'✓');
 assert.equal(el('completedGoals').textContent,'4/4 goals completed');
+assert.match(el('skillGoalHelp').textContent,/next run.*bonus pack/);
+ctx.check.set({daily:{runsCompleted:3,bestEligibleAccuracy:90,bestCombo:15,runPackGranted:true,goalsPackGranted:true,goalsPackAlbum:2}});
+assert.match(el('skillGoalHelp').textContent,/bonus earned.*Album 2/);
 ctx.check.set({daily:{runsCompleted:1,bestEligibleAccuracy:0,bestCombo:9}});
 assert.equal(el('q2').textContent,'1/3');assert.equal(el('q3').textContent,'0/90%');assert.equal(el('q4').textContent,'9/15');
 console.log('Skill goals display server progress and completed count.');

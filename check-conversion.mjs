@@ -126,9 +126,10 @@ console.log('XP pack tests passed: no retroactive XP, threshold and remainder, r
 p=await seed({0:1});
 d=await verifiedRun('skill-short',{score:10,hits:10,bestCombo:9});assert.equal(d.player.daily.bestEligibleAccuracy,0);assert.equal(d.player.daily.bestCombo,9);
 d=await verifiedRun('skill-rounded',{score:30,hits:26,misses:3,bestCombo:15});assert.equal(d.accuracy,90);assert.equal(d.player.daily.bestEligibleAccuracy,89);
-d=await verifiedRun('skill-eligible',{score:30,hits:18,misses:2,bestCombo:15});assert.equal(d.player.daily.bestEligibleAccuracy,90);assert.equal(d.player.daily.runsCompleted,3);
-d=await recordRun(uid,name,{runId:'skill-eligible'});assert.equal(d.player.daily.runsCompleted,3);
-p=d.player;p.daily.date=new Date(Date.now()-86400000).toISOString().slice(0,10);await savePlayer(p);p=await getPlayer(uid,name);assert.equal(p.daily.bestCombo,0);assert.equal(p.daily.bestEligibleAccuracy,0);assert.equal(p.daily.runsCompleted,0);
+d=await verifiedRun('skill-eligible',{score:30,hits:18,misses:2,bestCombo:15});assert.equal(d.player.daily.bestEligibleAccuracy,90);assert.equal(d.player.daily.runsCompleted,3);assert.equal(d.goalsPackGranted,true);assert.equal(d.player.daily.goalsPackGranted,true);const bonusPacks=d.player.packs;
+d=await recordRun(uid,name,{runId:'skill-eligible'});assert.equal(d.player.daily.runsCompleted,3);assert.equal(d.player.packs,bonusPacks);
+d=await verifiedRun('skill-fourth',{score:30,hits:18,misses:2,bestCombo:15});assert.equal(d.goalsPackGranted,false);assert.equal(d.player.packs,bonusPacks);
+p=d.player;p.daily.date=new Date(Date.now()-86400000).toISOString().slice(0,10);await savePlayer(p);p=await getPlayer(uid,name);assert.equal(p.daily.bestCombo,0);assert.equal(p.daily.bestEligibleAccuracy,0);assert.equal(p.daily.runsCompleted,0);assert.equal(p.daily.goalsPackGranted,false);
 console.log('Daily skill goals passed: minimum attempts, exact accuracy threshold, combo, replay and UTC reset.');
 // Payment inputs never override the official server lookup; reject invalid fields.
 const goodPayment={...payment,identifier:'negative-payment',metadata:{product:'sticker_bonus_pack_mainnet_v1'},status:{developer_completed:true,transaction_verified:true},transaction:{txid:'verified-tx'}};

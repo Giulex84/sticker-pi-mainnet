@@ -4,7 +4,7 @@ Sticker.pi is a Pi Network collectible skill game built around short daily chall
 
 ## Production status
 
-Current release: **v1.0.1**
+Current release: **v1.0.3**
 
 Production URL: https://sticker-pi-mainnet.vercel.app
 
@@ -62,3 +62,12 @@ Never commit credentials or reuse Testnet values.
 
 Daily state resets at `00:00 UTC`; it is not a rolling 24-hour timer.
 Daily leaderboard entries are retained temporarily and only the best verified result per Pioneer per UTC day is ranked.
+
+## Duplicate conversion (1.0.3)
+
+- Common/rare/epic/legendary missing stickers cost 4/8/16/24 extra copies.
+- Server quotes exact sources, using lower rarities first and preserving one copy per owned sticker.
+- Collection and durable per-user conversion receipt commit atomically with a snapshot comparison.
+- A lost response can be recovered with the same conversion identifier; confirmation is required before consuming copies.
+- Completing the album through conversion uses the existing one-time Master Collector reward.
+- Run `npm test` for mocked state/API and UI checks. Live authenticated Pi Browser conversion still requires manual verification.

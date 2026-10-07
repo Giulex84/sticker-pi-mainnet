@@ -2,7 +2,7 @@
 
 ## Review build
 
-Version: **v1.0.1**
+Version: **v1.0.3**
 
 URL: https://sticker-pi-mainnet.vercel.app
 
@@ -34,3 +34,12 @@ Each UTC day has an environment-specific deterministic challenge seed issued by 
 - Seasonal community drops are a future feature.
 - The app never requests a wallet passphrase, private key or seed phrase.
 - Authentication uses Pi SDK in Pi Browser; the separate OAuth-based Pi Sign-In portal option is not used.
+
+## Duplicate conversion (1.0.3)
+
+- Common/rare/epic/legendary missing stickers cost 4/8/16/24 extra copies.
+- Server quotes exact sources, using lower rarities first and preserving one copy per owned sticker.
+- Collection and durable per-user conversion receipt commit atomically with a snapshot comparison.
+- A lost response can be recovered with the same conversion identifier; confirmation is required before consuming copies.
+- Completing the album through conversion uses the existing one-time Master Collector reward.
+- Run `npm test` for mocked state/API and UI checks. Live authenticated Pi Browser conversion still requires manual verification.

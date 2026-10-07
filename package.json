@@ -1,7 +1,12 @@
 {
   "name": "sticker-pi-mainnet",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "type": "module",
-  "engines": {"node":"22.x"}
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "test": "node check-progress.cjs && node check-conversion.mjs && node check-conversion-ui.cjs"
+  }
 }

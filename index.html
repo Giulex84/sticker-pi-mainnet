@@ -817,12 +817,17 @@
           <div class="tile">
             <strong data-i18n="safeTrade">Duplicate tracking</strong>
             <p class="muted" data-i18n="safeTradeSub">
-              Keep track of extra copies in your collection. Trading is not available yet.
+              Convert extra copies into a missing sticker of your choice. Keep at least one copy of every sticker.
             </p>
             <div id="dupeList"></div>
+            <p id="conversionHelp" class="muted"></p>
+            <p id="conversionBalance" class="pill"></p>
+            <div id="conversionTargets" class="grid"></div>
+            <button id="recoverConversionBtn" class="secondary wide hidden" onclick="recoverConversion()"></button>
+            <div id="conversionStatus" class="status" role="status" aria-live="polite"></div>
           </div>
           <div class="notice" data-i18n="tradeNotice">
-            Trading coming soon. Your extra copies stay in your collection.
+            Conversions use duplicate stickers only, with no Pi payment. Peer-to-peer trading is not available.
           </div>
         </section>
         <section id="profile" class="section hidden">
@@ -864,7 +869,7 @@
         </section>
         <footer class="footer">
           <a href="/privacy.html" data-i18n="privacy">Privacy</a> ·
-          <a href="/terms.html" data-i18n="terms">Terms</a><br /><br />Sticker.pi Mainnet · v1.0.2
+          <a href="/terms.html" data-i18n="terms">Terms</a><br /><br />Sticker.pi Mainnet · v1.0.3
         </footer>
       </section>
     </main>
@@ -991,16 +996,16 @@
           q3: "Collect 3 unique stickers",
           openPack: "Open a sticker pack",
           openPackSub:
-            "Each pack contains 3 stickers. Duplicates are securely tracked for a future exchange feature.",
+            "Each pack contains 3 stickers. Use extra copies in Duplicates to complete your album.",
           open: "Open pack",
           bonus: "Bonus Pack",
           bonusSub: "Buy one bonus pack for 0.01 Pi.",
           buy: "Buy for 0.01 Pi",
           safeTrade: "Duplicate tracking",
           safeTradeSub:
-            "Keep track of extra copies in your collection. Trading is not available yet.",
+            "Convert extra copies into a missing sticker of your choice. Keep at least one copy of every sticker.",
           tradeNotice:
-            "Trading coming soon. Your extra copies stay in your collection.",
+            "Conversions use duplicate stickers only, with no Pi payment. Peer-to-peer trading is not available.",
           profileSub: "Play each day, grow your album and unlock the Master Collector badge.",
           plays: "Runs",
           best: "Best score",
@@ -1061,16 +1066,16 @@
           q2: "开启一个卡包",
           q3: "收集 3 张不同贴纸",
           openPack: "开启贴纸卡包",
-          openPackSub: "每包包含 3 张贴纸。重复贴纸会被安全记录，供未来交换功能使用。",
+          openPackSub: "每包包含 3 张贴纸。在重复贴纸页面使用额外副本完善图鉴。",
           open: "开启卡包",
           bonus: "奖励卡包",
           bonusSub: "使用 0.01 Pi 购买一个奖励卡包。",
           buy: "用 0.01 Pi 购买",
           safeTrade: "重复贴纸记录",
           safeTradeSub:
-            "查看收藏中的额外副本。交换功能尚未开放。",
+            "将额外副本转换为你选择的缺失贴纸。每种贴纸至少保留一张。",
           tradeNotice:
-            "交换功能即将推出。额外副本会保留在你的收藏中。",
+            "转换仅消耗重复贴纸，无需支付 Pi。用户间交换尚未开放。",
           profileSub: "每日挑战，完善图鉴，解锁收藏大师徽章。",
           plays: "挑战次数",
           best: "最高分",
@@ -1101,6 +1106,10 @@
         document.getElementById("completionTitle").textContent = dict[l].albumComplete;
         document.getElementById("completionText").textContent = dict[l].albumCompleteText;
         document.getElementById("closeCelebration").textContent = dict[l].continue;
+        if (document.getElementById("app") && !document.getElementById("app").classList.contains("hidden") && !document.getElementById("trade").classList.contains("hidden")) {
+          // Run after the current synchronous initialization has completed.
+          queueMicrotask(() => { renderDupes(); renderConversionOptions(); });
+        }
         const reward=dict[l].completionReward.split("|");
         document.getElementById("completionReward").innerHTML=`<b>${reward[0]}</b><br>${reward[1]}`;
       }
@@ -1113,7 +1122,7 @@
             ?.classList.toggle("active", x === id);
         });
         if (id === "album") renderAlbum();
-        if (id === "trade") renderDupes();
+        if (id === "trade") { renderDupes(); loadConversionOptions(); }
         if (id === "profile") renderStats();
       }
       function today() {
@@ -1265,6 +1274,79 @@
               )
               .join("")
           : `<p class="muted">${dict[lang()].noDupes}</p>`;
+      }
+      let conversionBusy = false, conversionOptions = null;
+      function conversionStorageKey() { return "sticker-conversion:" + player.uid; }
+      function pendingConversion() {
+        try { const raw=JSON.parse(localStorage.getItem(conversionStorageKey()) || "null"); return raw && Number.isInteger(raw.target) && typeof raw.conversionId==="string" && typeof raw.quote==="string" ? raw : null; } catch { return null; }
+      }
+      function renderConversionOptions() {
+        const zh=lang()==="zh", pending=pendingConversion();
+        document.getElementById("conversionHelp").textContent=zh
+          ? "选择缺失贴纸。确认前会列出消耗的副本；优先使用低稀有度副本，每种至少保留一张。"
+          : "Choose a missing sticker. Review the copies used before confirming. Lower rarities are used first; one of each sticker is always kept.";
+        const recovery=document.getElementById("recoverConversionBtn");
+        recovery.classList.toggle("hidden",!pending);
+        recovery.textContent=zh ? "恢复上次转换" : "Recover previous conversion";
+        recovery.disabled=conversionBusy;
+        const grid=document.getElementById("conversionTargets");grid.innerHTML="";
+        if(!conversionOptions)return;
+        document.getElementById("conversionBalance").textContent=zh
+          ? `可用重复副本：${conversionOptions.available}`
+          : `Duplicate copies available: ${conversionOptions.available}`;
+        if(!conversionOptions.targets.length){grid.textContent=zh ? "图鉴已完成，无缺失贴纸。" : "Album complete: no missing stickers.";return}
+        for(const option of conversionOptions.targets){
+          const sticker=stickers[option.index],tile=document.createElement("div");
+          tile.className="stickerCard";
+          tile.innerHTML=`<div class="stickerArt">${sticker[0]}</div><div class="stickerName">${sticker[1]}</div><div class="rarity">${sticker[2]}</div>`;
+          const button=document.createElement("button");button.className="secondary";
+          button.textContent=zh ? `${option.cost} 张重复副本` : `Use ${option.cost} duplicates`;
+          button.disabled=conversionBusy||!!pending||conversionOptions.available<option.cost;
+          button.onclick=()=>beginConversion(option.index);tile.appendChild(button);grid.appendChild(tile);
+        }
+      }
+      async function loadConversionOptions() {
+        if(!authData)return;
+        const d=await stateApi("conversion_options",{},false);
+        if(d?.conversion){conversionOptions=d.conversion;renderConversionOptions();}
+        else document.getElementById("conversionStatus").textContent=lastStateError || "Could not load conversion options.";
+      }
+      async function beginConversion(target) {
+        if(conversionBusy||pendingConversion())return;
+        conversionBusy=true;renderConversionOptions();
+        try {
+          const plan=await stateApi("conversion_quote",{target},false);
+          if(!plan)throw new Error(lastStateError || "Could not prepare conversion.");
+          const zh=lang()==="zh",sources=plan.consumed.map(x=>`${x.count} × ${stickers[x.index][1]}`).join("\n");
+          if(!confirm(zh ? `获得 ${stickers[target][1]}？\n消耗 ${plan.cost} 张重复副本：\n${sources}\n每种至少保留一张。无需支付 Pi。` : `Get ${stickers[target][1]}?\nUse ${plan.cost} duplicate copies:\n${sources}\nOne copy of every sticker is kept. No Pi payment.`))return;
+          const request={target,quote:plan.quote,conversionId:crypto.randomUUID()};
+          localStorage.setItem(conversionStorageKey(),JSON.stringify(request));
+          await submitConversion(request);
+        } catch(e){document.getElementById("conversionStatus").textContent=e.message;}
+        finally {conversionBusy=false;await loadConversionOptions();renderConversionOptions();}
+      }
+      async function recoverConversion() {
+        const request=pendingConversion();if(!request||conversionBusy)return;
+        conversionBusy=true;renderConversionOptions();
+        try {await submitConversion(request);}
+        catch(e){document.getElementById("conversionStatus").textContent=e.message;}
+        finally {conversionBusy=false;await loadConversionOptions();renderConversionOptions();}
+      }
+      async function submitConversion(request) {
+        const status=document.getElementById("conversionStatus");
+        status.textContent=lang()==="zh" ? "正在保存转换…" : "Saving conversion…";
+        const r=await fetch("/api/state",{method:"POST",headers:{Authorization:"Bearer "+authData.accessToken,"Content-Type":"application/json"},body:JSON.stringify({action:"convert_duplicates",...request})});
+        const d=await r.json();
+        if(!r.ok){
+          // These explicit rejections occur before the atomic commit.
+          if(r.status===400 || (r.status===409 && /already own|duplicates changed|collection changed|Not enough/.test(d.error||"")))localStorage.removeItem(conversionStorageKey());
+          throw new Error(d.error || "Could not confirm conversion. Use recovery to check again.");
+        }
+        if(!d.player || d.target!==request.target)throw new Error("Unexpected response. Recover the previous conversion.");
+        localStorage.removeItem(conversionStorageKey());
+        player={...player,...d.player};render();renderAlbum();renderDupes();
+        status.textContent=lang()==="zh" ? `已获得 ${stickers[d.target][1]} ✓` : `${stickers[d.target][1]} added to your album ✓`;
+        if(d.albumCompleted&&!d.alreadyConverted)showAlbumCelebration();
       }
       function renderStats() {
         document.getElementById("playsValue").textContent =

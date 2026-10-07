@@ -8,7 +8,7 @@ assert.equal(el('q1').textContent,'20/25');assert.match(el('nextGoalBtn').textCo
 ctx.check.set({packs:1,daily:{bestScore:28,runPackGranted:true,packsOpened:1,newUnique:2}});
 assert.equal(el('q1').textContent,'✓');assert.match(el('nextGoalBtn').textContent,/Open/);
 ctx.check.set({packs:0,collection:Object.fromEntries(Array.from({length:24},(_,i)=>[i,1]))});
-assert.match(el('nextGoalBtn').textContent,/album/);assert.match(el('albumGoalHint').textContent,/complete/);
+assert.match(el('nextGoalBtn').textContent,/next run/);assert.match(el('albumGoalHint').textContent,/complete/);
 assert(!script.includes('          loadLocal();'));
 assert(html.includes('sandbox: false'));assert(script.includes('amount: 0.01'));
 console.log('Progress goals: threshold, earned reward, next action, album completion and authoritative login passed.');
@@ -21,3 +21,10 @@ assert.match(el('xpPackProgressText').textContent,/180 XP/);assert.equal(el('xpP
 ctx.check.set({packXpProgress:320,daily:{xpPacksGranted:3}});
 assert.match(el('xpPackProgressText').textContent,/limit reached/);
 console.log('XP pack UI passed: remaining XP, progress bar, daily count and cap message.');
+
+ctx.check.set({daily:{runsCompleted:3,bestEligibleAccuracy:90,bestCombo:15,runPackGranted:true}});
+for(const id of ['q1','q2','q3','q4'])assert.equal(el(id).textContent,'✓');
+assert.equal(el('completedGoals').textContent,'4/4 goals completed');
+ctx.check.set({daily:{runsCompleted:1,bestEligibleAccuracy:0,bestCombo:9}});
+assert.equal(el('q2').textContent,'1/3');assert.equal(el('q3').textContent,'0/90%');assert.equal(el('q4').textContent,'9/15');
+console.log('Skill goals display server progress and completed count.');

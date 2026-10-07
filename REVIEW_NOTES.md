@@ -1,6 +1,6 @@
 # Sticker.pi Mainnet — Review notes
 
-Release: **v1.1.1**
+Release: **v1.1.2**
 URL: https://sticker-pi-mainnet.vercel.app
 
 ## Review path
@@ -29,8 +29,10 @@ Daily ranking uses the best verified UTC-day score, then accuracy and combo. It 
 
 Mocked UI and backend regression tests cover migration, album isolation, reward idempotence, conversion recovery and payment routing. Live authenticated Pi Browser visual verification and an Album 2 payment require manual checks. Peer-to-peer exchange and Mainnet A2U rewards are not active.
 
-## Gameplay XP packs (v1.1.1)
+## Gameplay XP packs (v1.1.2)
 
 Verified run XP advances a separate 500-XP pack meter. Up to three XP packs can be earned per UTC day, in addition to the existing daily score pack. Partial progress carries to the next day; after the cap, further run XP increases the level only and does not advance the pack meter. Packs belong to the album selected at run start. Opening packs and completing albums do not advance this meter. Existing level XP is preserved and is not backfilled into the new meter.
 
 The admin dashboard reports XP packs and player-days with one versus two or more completed runs. New telemetry begins at release; it does not measure multi-day retention.
+
+Daily skill goals: complete three verified runs, reach 90% accuracy with at least 20 attempts in one run, and reach a 15-hit combo. These goals grant no additional packs. Existing daily and 500 XP pack rewards are unchanged. Accuracy uses the unrounded ratio, floored for display; counters reset at 00:00 UTC.

@@ -111,3 +111,12 @@ d=await verifiedRun('xp-next-day',{score:10,hits:10});assert.equal(d.xpPacksGran
 // Pack-opening and album XP never advance gameplay pack progress.
 p=await seed(Object.fromEntries(Array.from({length:24},(_,i)=>[i,1])));p.packXpProgress=499;await savePlayer(p);d=await openPlayerPack(uid,name,{openId:'non-gameplay-xp'});assert.equal(d.player.packXpProgress,499);assert.equal(d.player.daily.xpPacksGranted,0);
 console.log('XP pack tests passed: no retroactive XP, threshold and remainder, replay, daily cap, UTC rollover/carry and exclusion of pack/album XP.');
+
+// Daily skill goals require a completed eligible run; retries never count twice.
+p=await seed({0:1});
+d=await verifiedRun('skill-short',{score:10,hits:10,bestCombo:9});assert.equal(d.player.daily.bestEligibleAccuracy,0);assert.equal(d.player.daily.bestCombo,9);
+d=await verifiedRun('skill-rounded',{score:30,hits:26,misses:3,bestCombo:15});assert.equal(d.accuracy,90);assert.equal(d.player.daily.bestEligibleAccuracy,89);
+d=await verifiedRun('skill-eligible',{score:30,hits:18,misses:2,bestCombo:15});assert.equal(d.player.daily.bestEligibleAccuracy,90);assert.equal(d.player.daily.runsCompleted,3);
+d=await recordRun(uid,name,{runId:'skill-eligible'});assert.equal(d.player.daily.runsCompleted,3);
+p=d.player;p.daily.date=new Date(Date.now()-86400000).toISOString().slice(0,10);await savePlayer(p);p=await getPlayer(uid,name);assert.equal(p.daily.bestCombo,0);assert.equal(p.daily.bestEligibleAccuracy,0);assert.equal(p.daily.runsCompleted,0);
+console.log('Daily skill goals passed: minimum attempts, exact accuracy threshold, combo, replay and UTC reset.');

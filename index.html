@@ -269,6 +269,7 @@
       .leaderboard li:last-child { border-bottom: 0; }
       .leaderboard b { color: var(--text); }
       .leaderboard small { float: right; color: var(--gold); }
+      .quest:has(.goalDone) { padding-top: 8px; padding-bottom: 8px; font-size: .9em; }
       .goalDone { color: var(--good) !important; border-color: var(--good) !important; }
       @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } .packReveal .stickerCard { opacity: 1; transform: none; } }
       .pill {
@@ -768,7 +769,7 @@
             <div class="top"><strong id="xpPackTitle">Next free pack</strong><span id="xpPackDaily" class="pill"></span></div>
             <p id="xpPackProgressText" class="muted"></p>
             <div id="xpPackProgress" class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="500"><i id="xpPackBar"></i></div>
-            <p id="xpPackHelp" class="mini muted"></p>
+            <details class="mini muted"><summary id="xpPackHelpTitle">How it works</summary><p id="xpPackHelp"></p></details>
           </div>
           <div class="tile leaderboard">
             <div class="top"><strong data-i18n="dailyRankings">Today’s Top 10</strong><span id="dailyPosition" class="pill"></span></div>
@@ -788,14 +789,17 @@
               ><span id="q1" class="pill">0/25</span>
             </div>
             <div class="quest">
-              <span>🎁 <span data-i18n="q2">Open a pack</span></span
-              ><span id="q2" class="pill">0/1</span>
+              <span>🎮 <span data-i18n="q2">Complete 3 runs</span></span
+              ><span id="q2" class="pill">0/3</span>
             </div>
             <div class="quest">
               <span
-                >🧩 <span data-i18n="q3">Collect 3 unique stickers</span></span
-              ><span id="q3" class="pill">0/3</span>
+                >🎯 <span data-i18n="q3">Reach 90% accuracy (20+ attempts)</span></span
+              ><span id="q3" class="pill">0/90%</span>
             </div>
+            <div class="quest"><span id="comboGoalLabel">🔥 Reach a 15-hit combo</span><span id="q4" class="pill">0/15</span></div>
+            <p id="skillGoalHelp" class="mini muted"></p>
+            <p id="completedGoals" class="mini" aria-live="polite"></p>
           </div>
         </section>
         <section id="album" class="section hidden">
@@ -890,7 +894,7 @@
         </section>
         <footer class="footer">
           <a href="/privacy.html" data-i18n="privacy">Privacy</a> ·
-          <a href="/terms.html" data-i18n="terms">Terms</a><br /><br />Sticker.pi Mainnet · v1.1.1
+          <a href="/terms.html" data-i18n="terms">Terms</a><br /><br />Sticker.pi Mainnet · v1.1.2
         </footer>
       </section>
     </main>
@@ -1048,8 +1052,8 @@
           noRankings: "No verified runs yet",
           yourRank: "Your rank",
           q1: "Reach 25 points to earn your daily pack",
-          q2: "Open a pack",
-          q3: "Collect 3 unique stickers",
+          q2: "Complete 3 runs",
+          q3: "Reach 90% accuracy (20+ attempts)",
           openPack: "Open a sticker pack",
           openPackSub:
             "Each pack contains 3 stickers. Use extra copies in Duplicates to complete your album.",
@@ -1119,8 +1123,8 @@
           noRankings: "暂无已验证成绩",
           yourRank: "你的排名",
           q1: "达到 25 分，获得每日卡包",
-          q2: "开启一个卡包",
-          q3: "收集 3 张不同贴纸",
+          q2: "完成 3 次挑战",
+          q3: "准确率达到 90%（至少 20 次点击）",
           openPack: "开启贴纸卡包",
           openPackSub: "每包包含 3 张贴纸。在重复贴纸页面使用额外副本完善图鉴。",
           open: "开启卡包",
@@ -1266,7 +1270,7 @@
         saveLocal();
       }
       function showNextGoal() {
-        show((player.packs || 0) > 0 ? "packs" : !player.daily?.runPackGranted ? "play" : "album");
+        show((player.packs || 0) > 0 ? "packs" : "play");
       }
       function renderXpPackProgress(){
         const zh=lang()==="zh",progress=Math.max(0,Math.min(499,Number(player.packXpProgress)||0)),earned=Number(player.daily?.xpPacksGranted)||0;
@@ -1277,6 +1281,7 @@
           : (zh?`${progress}/500 游戏经验 · 还差 ${500-progress} 经验`:`${progress}/500 gameplay XP · ${500-progress} XP to your next pack`);
         document.getElementById("xpPackBar").style.width=(progress/500*100)+"%";
         document.getElementById("xpPackProgress").setAttribute("aria-valuenow",String(progress));
+        document.getElementById("xpPackHelpTitle").textContent=zh?"如何获得":"How it works";
         document.getElementById("xpPackHelp").textContent=zh
           ? "仅已验证挑战的经验计入；每日最多 3 包。开启卡包和图鉴奖励不计入。达到上限后挑战仍提供等级经验。进度跨日保留，奖励属于开始挑战时选定的图鉴。"
           : "Verified run XP only; up to 3 packs per UTC day. Pack openings and album rewards do not count. After the limit, runs still earn level XP. Partial progress carries over; rewards go to the album selected when the run starts.";
@@ -1284,18 +1289,20 @@
       function renderGoals() {
         const zh = lang() === "zh", earned = !!player.daily?.runPackGranted;
         document.getElementById("q1").textContent = earned ? "✓" : Math.min(25, player.daily?.bestScore || 0) + "/25";
-        for (const id of ["q2", "q3"]) {
-          const complete = id === "q2" ? (player.daily?.packsOpened || 0) >= 1 : (player.daily?.newUnique || 0) >= 3;
-          document.getElementById(id).classList.toggle("goalDone", complete);
-        }
+        const values=[Math.min(3,player.daily?.runsCompleted||0),Math.min(90,player.daily?.bestEligibleAccuracy||0),Math.min(15,player.daily?.bestCombo||0)],targets=[3,90,15];
+        let completed=earned?1:0;
+        ["q2","q3","q4"].forEach((id,i)=>{const done=values[i]>=targets[i];completed+=done?1:0;const el=document.getElementById(id);el.textContent=done?"✓":`${values[i]}/${targets[i]}${i===1?"%":""}`;el.classList.toggle("goalDone",done);});
+        document.getElementById("comboGoalLabel").textContent=zh?"🔥 达到 15 连击":"🔥 Reach a 15-hit combo";
+        document.getElementById("skillGoalHelp").textContent=zh?"技能目标没有额外卡包奖励；挑战经验计入 500 XP 卡包进度。":"Skill goals award no extra packs. Run XP counts toward your next 500 XP pack.";
+        document.getElementById("completedGoals").textContent=zh?`已完成 ${completed}/4 个目标`:`${completed}/4 goals completed`;
         document.getElementById("q1").classList.toggle("goalDone", earned);
         document.getElementById("dailyGoalHint").textContent = earned
-          ? (zh ? "今日免费卡包已获得。再次挑战可提高今日排名。" : "Daily free pack earned. Play again to improve your daily rank.")
+          ? (zh ? "今日免费卡包已获得。再次挑战可提高今日排名。" : "Daily pack earned. Keep playing for XP packs and your daily best.")
           : (zh ? "达到 25 分可获得 1 个免费卡包，每日一次。" : "Score 25 to earn 1 free pack, once per day.");
         document.getElementById("nextGoalBtn").textContent = (player.packs || 0) > 0
           ? (zh ? "开启可用卡包" : "Open your available packs")
           : !earned ? (zh ? "挑战每日卡包" : "Play for your daily pack")
-          : (zh ? "查看图鉴进度" : "View your album progress");
+          : (zh ? "再玩一局" : "Play your next run");
         document.getElementById("dailyResetHint").textContent = zh ? "每日挑战于 00:00 UTC 重置。连续天数以完成挑战为准。" : "Daily challenges reset at 00:00 UTC. Complete a run each day to build your streak.";
         const remaining = Math.max(0, 24 - uniqueCount());
         document.getElementById("albumGoalHint").textContent = remaining

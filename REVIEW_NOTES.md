@@ -1,45 +1,30 @@
-# Sticker.pi Mainnet — Reviewer Notes
+# Sticker.pi Mainnet — Review notes
 
-## Review build
-
-Version: **v1.0.3**
-
+Release: **v1.1.0**
 URL: https://sticker-pi-mainnet.vercel.app
 
-Sticker.pi is a short-session skill game and collectible album. Players authenticate through Pi SDK, complete a 30-second challenge, earn server-verified progression, open sticker packs and complete a 24-sticker album.
+## Review path
 
-## Recommended review path
+1. Authenticate with Pi SDK in Pi Browser.
+2. Complete a daily run and inspect XP, ranking and the 25-point free pack objective.
+3. Open a pack and inspect the album, rarity and NEW/DUPLICATE feedback.
+4. In Duplicates, select a missing sticker and inspect the custom confirmation before converting extra copies.
+5. Optionally purchase a 0.01 Pi pack; confirm the album named in the official wallet prompt and delivery.
+6. Reload to verify persistent state.
+7. Complete Album 1 to unlock Ocean Wonders. The original album remains accessible.
+8. Select Album 2, receive its one-time free starter pack and verify that its cards and duplicate inventory are separate.
+9. Review Profile, Privacy and Terms.
 
-1. Open the app in Pi Browser and continue with Pi.
-2. Complete one 30-second Sticker Catch run generated from the server-issued daily seed.
-3. Review score, accuracy, combo, XP, daily quest progress, Top 10 and personal rank.
-4. Open an available pack and review rarity, NEW/DUPLICATE state and Album progress.
-5. Open Trade and confirm it is clearly marked “Coming soon”; no peer-to-peer transfer is available.
-6. Optionally purchase the 0.01 Pi Bonus Pack.
-7. Close and reopen the app to confirm server-side persistence.
-8. Review Profile, Privacy and Terms.
+## Safeguards
 
-## Payment safeguards
+Pi SDK-only authentication and Pi-only payments. The backend validates authenticated identity and verified transaction metadata before delivering a purchased pack exactly once. Legacy purchases without album metadata remain routed to Album 1.
 
-The Bonus Pack uses a User-to-App payment. The backend verifies the authenticated user, direction, Mainnet network, exact amount, memo, product metadata, cancellation state, transaction ID and final Pi verification before granting exactly one pack. Approval, completion and recovery are idempotent.
+Duplicate conversions consume game items only and involve no Pi payment, wager or financial return. Exact source copies are shown before confirmation; one copy of each sticker is preserved. Durable receipts and atomic writes protect response-loss recovery.
 
-## Daily ranking safeguards
+Each album has a separate completion badge and one-time reward. Previous collections, purchases, packs and progression are preserved through a lazy compatibility migration.
 
-Each UTC day has an environment-specific deterministic challenge seed issued by the backend. Runs require a short-lived server record and pass duration, score, hit, miss and combo plausibility checks. Only a Pioneer’s best verified daily result is ranked. Score ranks first, then accuracy and best combo. The Top 10 displays the authorized Pi username and contains no Pi prize, wager or entry fee.
+Daily ranking uses the best verified UTC-day score, then accuracy and combo. It has no entry fee or monetary prize. Run duration and result plausibility are checked server-side.
 
-## Intentional limitations
+## Validation limits
 
-- Peer-to-peer exchange is not active.
-- A2U rewards are not active on Mainnet.
-- Seasonal community drops are a future feature.
-- The app never requests a wallet passphrase, private key or seed phrase.
-- Authentication uses Pi SDK in Pi Browser; the separate OAuth-based Pi Sign-In portal option is not used.
-
-## Duplicate conversion (1.0.3)
-
-- Common/rare/epic/legendary missing stickers cost 4/8/16/24 extra copies.
-- Server quotes exact sources, using lower rarities first and preserving one copy per owned sticker.
-- Collection and durable per-user conversion receipt commit atomically with a snapshot comparison.
-- A lost response can be recovered with the same conversion identifier; confirmation is required before consuming copies.
-- Completing the album through conversion uses the existing one-time Master Collector reward.
-- Run `npm test` for mocked state/API and UI checks. Live authenticated Pi Browser conversion still requires manual verification.
+Mocked UI and backend regression tests cover migration, album isolation, reward idempotence, conversion recovery and payment routing. Live authenticated Pi Browser visual verification and an Album 2 payment require manual checks. Peer-to-peer exchange and Mainnet A2U rewards are not active.

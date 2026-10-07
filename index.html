@@ -163,6 +163,16 @@
       }
       .celebrationIcon { font-size: 76px; animation: pop .65s ease both; }
       .masterFrame { border-color: #ffd166 !important; box-shadow: 0 0 30px #ffd16633; }
+      .albumSelector { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0; }
+      .albumChoice { text-align:left;padding:14px;border-radius:20px; }
+      .albumChoice.active { border-color:var(--accent2);background:#15343d; }
+      .albumChoice small { display:block;font-weight:400;color:var(--muted);margin-top:5px; }
+      .conversionCard { max-height:85vh;max-height:85dvh;overflow:auto;text-align:left;border-color:var(--accent2); }
+      .conversionPreview { display:flex;align-items:center;gap:16px;padding:15px;border-radius:18px;background:#101d38;margin:16px 0; }
+      .conversionPreview .stickerArt { font-size:56px; }
+      .conversionActions { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px; }
+      .conversionSources { list-style:none;padding:0;margin:12px 0; }
+      .conversionSources li { display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line); }
       .lang {
         display: flex;
         gap: 8px;
@@ -640,6 +650,11 @@
             Reset view
           </button>
         </div>
+        <div class="albumSelector" aria-label="Select album">
+          <button id="album1Btn" class="secondary albumChoice" onclick="switchAlbum(1)"></button>
+          <button id="album2Btn" class="secondary albumChoice" onclick="switchAlbum(2)"></button>
+        </div>
+        <p id="activeAlbumHint" class="mini muted"></p>
         <div class="dashboard">
           <div class="metric">
             <span data-i18n="level">Level</span><b id="levelValue">1</b>
@@ -803,7 +818,7 @@
           <div class="tile" style="margin-top: 10px">
             <div class="pack">✨</div>
             <strong data-i18n="bonus">Bonus Pack</strong>
-            <p class="muted" data-i18n="bonusSub">
+            <p id="bonusSubText" class="muted" data-i18n="bonusSub">
               Buy one bonus pack for 0.01 Pi.
             </p>
             <button id="payBtn" class="primary wide" data-i18n="buy">
@@ -863,22 +878,37 @@
           <div class="tile">
             <strong data-i18n="roadmap">Your album goal</strong>
             <p class="muted" data-i18n="roadmapSub">
-              Collect all 24 stickers to unlock Master Collector, 250 XP and 3 celebration packs. Earn a free daily pack by scoring 25 points.
+              Complete each 24-sticker album to unlock its collector badge, 250 XP and 3 celebration packs. Earn a free daily pack by scoring 25 points.
             </p>
           </div>
         </section>
         <footer class="footer">
           <a href="/privacy.html" data-i18n="privacy">Privacy</a> ·
-          <a href="/terms.html" data-i18n="terms">Terms</a><br /><br />Sticker.pi Mainnet · v1.0.3
+          <a href="/terms.html" data-i18n="terms">Terms</a><br /><br />Sticker.pi Mainnet · v1.1.0
         </footer>
       </section>
     </main>
+    <div id="conversionDialog" class="celebration hidden" role="dialog" aria-modal="true" aria-labelledby="conversionTitle">
+      <div class="celebrationCard conversionCard">
+        <span id="conversionAlbum" class="pill"></span>
+        <h2 id="conversionTitle">Complete your collection</h2>
+        <div id="conversionPreview" class="conversionPreview"></div>
+        <strong id="conversionCost"></strong>
+        <ul id="conversionSources" class="conversionSources"></ul>
+        <p id="conversionSafety" class="mini muted"></p>
+        <div class="conversionActions">
+          <button id="cancelConversion" class="secondary">Cancel</button>
+          <button id="confirmConversion" class="primary">Convert</button>
+        </div>
+      </div>
+    </div>
     <div id="albumCelebration" class="celebration hidden" role="dialog" aria-modal="true" aria-labelledby="completionTitle">
       <div class="celebrationCard">
         <div class="celebrationIcon">🏆✨</div>
         <h2 id="completionTitle">Album complete!</h2>
         <p id="completionText" class="muted">You collected all 24 Season 1 stickers.</p>
         <p id="completionReward"><b>Master Collector</b><br>+250 XP · +3 celebration packs</p>
+        <button id="nextAlbumBtn" class="secondary wide hidden" style="margin-bottom:10px" onclick="startNextAlbum()">Explore Album 2</button>
         <button id="closeCelebration" class="primary wide">Continue</button>
       </div>
     </div>
@@ -930,6 +960,26 @@
         ["🪽", "Sky Wing", "epic"],
         ["⭐", "Founder Star", "legendary"],
       ];
+      stickers.push(
+        ["🐚","Pearl Shell","common"],["🐬","Silver Dolphin","rare"],
+        ["🐟","Reef Fish","common"],["🦀","Coral Crab","common"],
+        ["🐙","Violet Octopus","rare"],["🪸","Coral Garden","common"],
+        ["🪼","Glow Jelly","common"],["🦈","Deepwater Shark","epic"],
+        ["🐋","Blue Whale","epic"],["🐢","Sea Turtle","rare"],
+        ["🦭","Harbor Seal","rare"],["🦐","Tiny Shrimp","common"],
+        ["🦑","Ink Squid","common"],["🐡","Puffer Pearl","rare"],
+        ["⚓","Old Anchor","common"],["🔱","Ocean Trident","epic"],
+        ["🏝️","Hidden Island","rare"],["🌊","Rolling Wave","common"],
+        ["🧜","Reef Guardian","epic"],["🛶","Lagoon Canoe","rare"],
+        ["🪨","Tide Stone","common"],["🪷","Water Lily","rare"],
+        ["🗺️","Sunken Map","epic"],["🏰","Lost Atlantis","legendary"]
+      );
+      var albumSwitchBusy=false,paymentFlowBusy=false;
+      function activeAlbum(){return player.activeAlbum===2?2:1}
+      function albumIndices(id=activeAlbum()){return Array.from({length:24},(_,i)=>(id===2?24:0)+i)}
+      function albumName(id=activeAlbum()){return id===2 ? (lang()==="zh" ? "图鉴 2 · 海洋奇境" : "Album 2 · Ocean Wonders") : (lang()==="zh" ? "图鉴 1 · Pioneer Collection" : "Album 1 · Pioneer Collection")}
+      function albumBadge(){return activeAlbum()===2?"ocean_collector_s2":"master_collector_s1"}
+      function totalUnique(){return Object.values(player.collection||{}).filter(n=>Number(n)>0).length}
       let player = {
         version: 4,
         level: 1,
@@ -1013,7 +1063,7 @@
           unique: "Unique stickers",
           roadmap: "Your album goal",
           roadmapSub:
-            "Collect all 24 stickers to unlock Master Collector, 250 XP and 3 celebration packs. Earn a free daily pack by scoring 25 points.",
+            "Complete each 24-sticker album to unlock its collector badge, 250 XP and 3 celebration packs. Earn a free daily pack by scoring 25 points.",
         },
         zh: {
           tag: "玩 · 收集 · 完成",
@@ -1083,7 +1133,7 @@
           unique: "不同贴纸",
           roadmap: "你的图鉴目标",
           roadmapSub:
-            "收集全部 24 张贴纸，解锁收藏大师、250 经验和 3 个庆祝卡包。每日达到 25 分可获得免费卡包。",
+            "完成每个 24 张贴纸的图鉴，获得收藏徽章、250 经验和 3 个庆祝卡包。每日达到 25 分可获得免费卡包。",
         },
       };
       function lang() {
@@ -1104,7 +1154,7 @@
         if (document.getElementById("accuracy")) updateAccuracy();
         if (document.getElementById("app") && !document.getElementById("app").classList.contains("hidden")) render();
         document.getElementById("completionTitle").textContent = dict[l].albumComplete;
-        document.getElementById("completionText").textContent = dict[l].albumCompleteText;
+        document.getElementById("completionText").textContent = l==="zh" ? `已收集 ${albumName()} 的全部 24 张贴纸。` : `You collected all 24 stickers in ${albumName()}.`;
         document.getElementById("closeCelebration").textContent = dict[l].continue;
         if (document.getElementById("app") && !document.getElementById("app").classList.contains("hidden") && !document.getElementById("trade").classList.contains("hidden")) {
           // Run after the current synchronous initialization has completed.
@@ -1128,11 +1178,36 @@
       function today() {
         return new Date().toISOString().slice(0, 10);
       }
-      function uniqueCount() {
-        return Object.keys(player.collection || {}).filter(
-          (k) => player.collection[k] > 0,
-        ).length;
+      function uniqueCount(id=activeAlbum()) {
+        return albumIndices(id).filter(i=>Number(player.collection?.[i])>0).length;
       }
+      function renderAlbumSelector(){
+        const zh=lang()==="zh",unlocked=uniqueCount(1)===24;
+        for(const id of [1,2]){
+          const button=document.getElementById("album"+id+"Btn");
+          button.innerHTML=`${id===2?"🌊":"✨"} ${albumName(id)}<small>${uniqueCount(id)}/24 · ${id===2&&!unlocked?(zh?"完成图鉴 1 解锁":"Complete Album 1 to unlock"):(zh?"永久收藏":"Permanent collection")}</small>`;
+          button.disabled=albumSwitchBusy || (id===2&&!unlocked);
+          button.classList.toggle("active",activeAlbum()===id);
+        }
+        document.getElementById("activeAlbumHint").textContent=zh ? `当前卡包和重复副本属于：${albumName()}` : `Packs and duplicate conversions belong to ${albumName()}.`;
+        document.getElementById("masterBadge").textContent=activeAlbum()===2?"🏆 Ocean Collector · Album 2":"🏆 Master Collector · Album 1";
+        document.getElementById("bonusSubText").textContent=zh ? `0.01 Pi 购买 ${albumName()} 的一个卡包。` : `Buy one pack for ${albumName()} for 0.01 Pi.`;
+      }
+      async function switchAlbum(id){
+        if(albumSwitchBusy||gameTimer||paymentFlowBusy||pendingPayment||conversionBusy||pendingConversion()) {
+          document.getElementById("activeAlbumHint").textContent=lang()==="zh"?"请先完成当前挑战或恢复转换。":"Finish your run, payment or pending conversion before switching albums.";
+          return;
+        }
+        albumSwitchBusy=true;renderAlbumSelector();
+        const d=await stateApi("select_album",{albumId:id},false);
+        albumSwitchBusy=false;renderAlbumSelector();
+        if(!d){document.getElementById("activeAlbumHint").textContent=lastStateError;return}
+        document.getElementById("packReveal").innerHTML="";document.getElementById("packSummary").textContent="";
+        if(document.getElementById("payBtn").textContent==="Purchased ✓"){document.getElementById("payBtn").disabled=false;document.getElementById("payBtn").textContent=dict[lang()].buy;}
+        conversionOptions=null;renderAlbum();renderDupes();await loadConversionOptions();
+        if(d.starterGranted)document.getElementById("activeAlbumHint").textContent=lang()==="zh"?"海洋奇境已解锁！获得 1 个免费起始卡包。":"Ocean Wonders unlocked! Your free starter pack is ready.";
+      }
+      async function startNextAlbum(){document.getElementById("albumCelebration").classList.add("hidden");await switchAlbum(2);show("packs")}
       function calcLevel() {
         player.level = Math.max(1, Math.floor((player.xp || 0) / 100) + 1);
       }
@@ -1175,9 +1250,10 @@
         document.getElementById("storageFlag").textContent = storageOnline
           ? dict[lang()].synced
           : "device save";
+        renderAlbumSelector();
         renderGoals();
         renderStats();
-        const isMaster=(player.badges||[]).includes("master_collector_s1");
+        const isMaster=(player.badges||[]).includes(albumBadge());
         document.getElementById("masterBadge").classList.toggle("hidden",!isMaster);
         document.getElementById("profileHero").classList.toggle("masterFrame",isMaster);
         saveLocal();
@@ -1203,7 +1279,7 @@
         document.getElementById("dailyResetHint").textContent = zh ? "每日挑战于 00:00 UTC 重置。连续天数以完成挑战为准。" : "Daily challenges reset at 00:00 UTC. Complete a run each day to build your streak.";
         const remaining = Math.max(0, 24 - uniqueCount());
         document.getElementById("albumGoalHint").textContent = remaining
-          ? (zh ? `还差 ${remaining} 张即可获得收藏大师、250 经验和 3 个卡包。` : `${remaining} stickers to Master Collector: +250 XP and +3 packs.`)
+          ? (zh ? `还差 ${remaining} 张即可获得收藏大师、250 经验和 3 个卡包。` : `${remaining} stickers to ${activeAlbum()===2?"Ocean Collector":"Master Collector"}: +250 XP and +3 packs.`)
           : (zh ? "24/24：图鉴完成！" : "24/24: album complete!");
       }
       async function stateApi(action = "load", payload = {}, retry = true) {
@@ -1241,7 +1317,10 @@
         } catch (error) { lastStateError = error?.message || "Network error"; }
         return null;
       }
-      function showAlbumCelebration() {
+      function showAlbumCelebration(id=activeAlbum()) {
+        document.getElementById("completionText").textContent=lang()==="zh" ? `已收集 ${albumName(id)} 的全部 24 张贴纸。` : `You collected all 24 stickers in ${albumName(id)}.`;
+        document.getElementById("completionReward").textContent=(id===2?"Ocean Collector":"Master Collector")+" · +250 XP · +3 packs";
+        document.getElementById("nextAlbumBtn").classList.toggle("hidden",id!==1);
         document.getElementById("albumCelebration").classList.remove("hidden");
         if (navigator.vibrate) navigator.vibrate([70,40,100,40,140]);
       }
@@ -1251,7 +1330,8 @@
       function renderAlbum() {
         const g = document.getElementById("albumGrid");
         g.innerHTML = "";
-        stickers.forEach((s, i) => {
+        albumIndices().forEach(i => {
+          const s=stickers[i];
           const c = Number(player.collection?.[i] || 0);
           const el = document.createElement("div");
           el.className = "stickerCard" + (c ? "" : " locked");
@@ -1264,7 +1344,7 @@
       function renderDupes() {
         const box = document.getElementById("dupeList");
         const arr = Object.entries(player.duplicates || {}).filter(
-          ([, n]) => n > 0,
+          ([i, n]) => n > 0 && albumIndices().includes(Number(i)),
         );
         box.innerHTML = arr.length
           ? arr
@@ -1311,14 +1391,34 @@
         if(d?.conversion){conversionOptions=d.conversion;renderConversionOptions();}
         else document.getElementById("conversionStatus").textContent=lastStateError || "Could not load conversion options.";
       }
+      let conversionDialogResolver=null,conversionDialogFocus=null,previousOverflow="";
+      function openConversionDialog(plan){
+        const zh=lang()==="zh",s=stickers[plan.target],dialog=document.getElementById("conversionDialog");
+        document.getElementById("conversionAlbum").textContent=albumName(plan.albumId||activeAlbum());
+        document.getElementById("conversionTitle").textContent=zh?"获得缺失贴纸":"Get your missing sticker";
+        document.getElementById("conversionPreview").innerHTML=`<div class="stickerArt">${s[0]}</div><div><strong>${s[1]}</strong><div class="rarity">${s[2]}</div></div>`;
+        document.getElementById("conversionCost").textContent=zh?`消耗 ${plan.cost} 张重复副本`:`Use ${plan.cost} duplicate copies`;
+        document.getElementById("conversionSources").innerHTML=plan.consumed.map(x=>`<li><span>${stickers[x.index][0]} ${stickers[x.index][1]}</span><b>×${x.count}</b></li>`).join("");
+        document.getElementById("conversionSafety").textContent=zh?"每种至少保留一张。无需支付 Pi。确认后消耗的副本无法撤销。":"One copy of every sticker is kept. No Pi payment. Consumed copies cannot be restored after confirmation.";
+        document.getElementById("cancelConversion").textContent=zh?"取消":"Keep my duplicates";
+        document.getElementById("confirmConversion").textContent=zh?"确认转换":"Confirm conversion";
+        conversionDialogFocus=document.activeElement;previousOverflow=document.body.style.overflow;
+        document.body.style.overflow="hidden";dialog.classList.remove("hidden");
+        document.getElementById("cancelConversion").focus();
+        return new Promise(resolve=>{conversionDialogResolver=resolve});
+      }
+      function closeConversionDialog(confirmed){
+        if(!conversionDialogResolver)return;
+        document.getElementById("conversionDialog").classList.add("hidden");document.body.style.overflow=previousOverflow;
+        const resolve=conversionDialogResolver;conversionDialogResolver=null;conversionDialogFocus?.focus?.();resolve(confirmed);
+      }
       async function beginConversion(target) {
         if(conversionBusy||pendingConversion())return;
         conversionBusy=true;renderConversionOptions();
         try {
           const plan=await stateApi("conversion_quote",{target},false);
           if(!plan)throw new Error(lastStateError || "Could not prepare conversion.");
-          const zh=lang()==="zh",sources=plan.consumed.map(x=>`${x.count} × ${stickers[x.index][1]}`).join("\n");
-          if(!confirm(zh ? `获得 ${stickers[target][1]}？\n消耗 ${plan.cost} 张重复副本：\n${sources}\n每种至少保留一张。无需支付 Pi。` : `Get ${stickers[target][1]}?\nUse ${plan.cost} duplicate copies:\n${sources}\nOne copy of every sticker is kept. No Pi payment.`))return;
+          if(!await openConversionDialog(plan))return;
           const request={target,quote:plan.quote,conversionId:crypto.randomUUID()};
           localStorage.setItem(conversionStorageKey(),JSON.stringify(request));
           await submitConversion(request);
@@ -1346,7 +1446,7 @@
         localStorage.removeItem(conversionStorageKey());
         player={...player,...d.player};render();renderAlbum();renderDupes();
         status.textContent=lang()==="zh" ? `已获得 ${stickers[d.target][1]} ✓` : `${stickers[d.target][1]} added to your album ✓`;
-        if(d.albumCompleted&&!d.alreadyConverted)showAlbumCelebration();
+        if(d.albumCompleted&&!d.alreadyConverted)showAlbumCelebration(d.albumId||activeAlbum());
       }
       function renderStats() {
         document.getElementById("playsValue").textContent =
@@ -1355,7 +1455,7 @@
           player.stats?.bestScore || 0;
         document.getElementById("openedValue").textContent =
           player.stats?.packsOpened || 0;
-        document.getElementById("uniqueValue").textContent = uniqueCount();
+        document.getElementById("uniqueValue").textContent = totalUnique();
       }
       function seededRandom(seed) {
         let value = seed >>> 0;
@@ -1394,13 +1494,13 @@
       function chooseTarget() {
         clearRoundTimer();
         roundLocked = false;
-        currentTarget = Math.floor(runRandom() * stickers.length);
+        currentTarget = albumIndices()[Math.floor(runRandom() * 24)];
         const sequenceMode =
           feverMode || (gameScore >= 10 && gameCombo >= 3);
         targetSequence = [currentTarget];
         if (sequenceMode) {
           let secondTarget;
-          do secondTarget = Math.floor(runRandom() * stickers.length);
+          do secondTarget = albumIndices()[Math.floor(runRandom() * 24)];
           while (secondTarget === currentTarget);
           targetSequence.push(secondTarget);
         }
@@ -1413,13 +1513,13 @@
         const preferred = stickers
           .map((s, i) => ({ i, s }))
           .filter(
-            (x) => !targetSequence.includes(x.i) && x.s[2] === targetRarity,
+            (x) => albumIndices().includes(x.i) && !targetSequence.includes(x.i) && x.s[2] === targetRarity,
           )
           .map((x) => x.i);
         shuffle(preferred);
         preferred.slice(0, 3).forEach((i) => choices.push(i));
         while (choices.length < 6) {
-          const n = Math.floor(runRandom() * stickers.length);
+          const n = albumIndices()[Math.floor(runRandom() * 24)];
           if (!choices.includes(n)) choices.push(n);
         }
         shuffle(choices).forEach((i) => {
@@ -1669,11 +1769,11 @@
         const openId =
           globalThis.crypto?.randomUUID?.() ||
           `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        const d = await stateApi("open_pack", { openId });
+        const d = await stateApi("open_pack", { openId,albumId:activeAlbum() });
         button.disabled = false;
         button.textContent = dict[lang()].open;
         if (!d?.reveal) return;
-        if (d.albumCompleted) showAlbumCelebration();
+        if (d.albumCompleted) showAlbumCelebration(d.albumId||activeAlbum());
         const box = document.getElementById("packReveal");
         box.innerHTML = "";
         const cards = d.cards || d.reveal.map((index) => ({ index, isNew: false }));
@@ -1730,6 +1830,7 @@
             paymentId: pendingPayment.identifier || pendingPayment.paymentId,
           });
           if (d.completed) {
+            pendingPayment=null;
             setPaymentStatus("Previous payment completed ✓");
             if (d.player) {
               player = { ...player, ...d.player };
@@ -1768,7 +1869,7 @@
           document.getElementById("loggedOut").classList.add("hidden");
           document.getElementById("app").classList.remove("hidden");
           await loadDailyLeaderboard();
-          if (uniqueCount() === 24 && !(player.badges || []).includes("master_collector_s1")) {
+          if (uniqueCount() === 24 && !(player.badges || []).includes(albumBadge())) {
             const completion = await stateApi("claim_album_reward");
             if (completion?.albumCompleted) showAlbumCelebration();
           }
@@ -1784,13 +1885,14 @@
         const b = document.getElementById("payBtn");
         b.disabled = true;
         paymentApprovalFailure = "";
+        paymentFlowBusy=true;
         setPaymentStatus("Opening Pi payment…");
         try {
           await Pi.createPayment(
             {
               amount: 0.01,
-              memo: "Sticker.pi Bonus Pack",
-              metadata: { product: "sticker_bonus_pack_mainnet_v1" },
+              memo: "Sticker.pi Album "+activeAlbum()+" Bonus Pack",
+              metadata: { product: "sticker_bonus_pack_mainnet_v1",albumId:activeAlbum() },
             },
             {
               onReadyForServerApproval: async (paymentId) => {
@@ -1813,24 +1915,40 @@
                     player = { ...player, ...d.player };
                     render();
                   }
+                  paymentFlowBusy=false;
                   b.textContent = "Purchased ✓";
                 }
               },
               onCancel: () => {
+                paymentFlowBusy=false;
                 setPaymentStatus(paymentApprovalFailure || "Payment cancelled");
                 b.disabled = false;
               },
               onError: (error) => {
+                paymentFlowBusy=false;
                 setPaymentStatus(error?.message || "Payment error");
                 b.disabled = false;
               },
             },
           );
         } catch (e) {
+          paymentFlowBusy=false;
           setPaymentStatus(e.message);
           b.disabled = false;
         }
       }
+      document.getElementById("conversionDialog").onclick=event=>{if(event.target===event.currentTarget)closeConversionDialog(false)};
+      document.getElementById("confirmConversion").onclick=()=>closeConversionDialog(true);
+      document.getElementById("cancelConversion").onclick=()=>closeConversionDialog(false);
+      document.addEventListener("keydown",event=>{
+        if(!conversionDialogResolver)return;
+        if(event.key==="Escape"){event.preventDefault();closeConversionDialog(false)}
+        if(event.key==="Tab"){
+          const first=document.getElementById("cancelConversion"),last=document.getElementById("confirmConversion");
+          if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}
+          else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
+        }
+      });
       document.getElementById("loginBtn").onclick = login;
       document.getElementById("logoutBtn").onclick = () => location.reload();
       document.getElementById("payBtn").onclick = buyPack;

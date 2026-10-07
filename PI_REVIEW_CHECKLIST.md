@@ -5,7 +5,7 @@
 - [x] Separate Mainnet GitHub repository
 - [x] Separate Mainnet Vercel project and production URL
 - [x] Paired Mainnet Pi app and Mainnet API key
-- [x] Connected Mainnet app wallet
+- [ ] Confirm Developer Mainnet App Wallet approval in the Portal (latest user screenshot: pending review)
 - [x] Mainnet Redis namespace and server-authoritative storage
 - [x] Pi SDK configured with `sandbox: false`
 - [x] Payment restricted to `user_to_app`, `Pi Network`, 0.01 Pi and the Mainnet product identifier
@@ -15,7 +15,7 @@
 - [x] Real 0.01 Pi U2A purchase completed
 - [x] Purchased pack granted exactly once
 - [x] Privacy and Terms routes available
-- [x] Release version aligned to `v1.0.3`
+- [x] Release version aligned to `v1.1.0`
 
 ## Repository safeguards
 
@@ -33,7 +33,7 @@
 ## Final manual checks immediately before submission
 
 - [ ] Open the latest Vercel production deployment in Pi Browser
-- [ ] Confirm footer displays `Sticker.pi Mainnet · v1.0.3`
+- [ ] Confirm footer displays `Sticker.pi Mainnet · v1.1.0`
 - [ ] Confirm login, one full run, pack opening, Album and Profile
 - [ ] Confirm Top 10 and personal daily rank update after a verified run
 - [ ] Confirm Duplicates quotes the exact copies consumed and preserves one copy of each sticker
@@ -42,7 +42,7 @@
 - [ ] Confirm listing screenshots match the current build
 - [ ] Freeze the reviewed commit/deployment
 
-## Duplicate conversion (1.0.3)
+## Duplicate conversion (1.1.0)
 
 - Common/rare/epic/legendary missing stickers cost 4/8/16/24 extra copies.
 - Server quotes exact sources, using lower rarities first and preserving one copy per owned sticker.
@@ -50,3 +50,13 @@
 - A lost response can be recovered with the same conversion identifier; confirmation is required before consuming copies.
 - Completing the album through conversion uses the existing one-time Master Collector reward.
 - Run `npm test` for mocked state/API and UI checks. Live authenticated Pi Browser conversion still requires manual verification.
+
+## Album 2 and custom confirmation
+
+- [x] Automated compatibility tests preserve Album 1 data and old payment delivery
+- [x] Automated tests isolate album packs and duplicates
+- [x] Starter and completion rewards tested once per album
+- [x] Custom conversion dialog supports cancel, Escape and keyboard focus containment
+- [ ] Verify mobile modal appearance in Pi Browser
+- [ ] Complete Album 1 and select Ocean Wonders in Pi Browser
+- [ ] Verify a real Album 2 purchase and persistence after reload

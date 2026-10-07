@@ -1,73 +1,78 @@
 # Sticker.pi Mainnet
 
-Sticker.pi is a Pi Network collectible skill game built around short daily challenges, sticker packs and album completion.
+Sticker.pi is a Pi SDK collectible skill game with daily challenges and permanent themed albums.
 
-## Production status
+## Release and deployment
 
-Current release: **v1.0.3**
+- Release: **v1.1.0**
+- App: https://sticker-pi-mainnet.vercel.app
+- Private metrics: https://sticker-pi-mainnet.vercel.app/admin.html
+- Mainnet-only repository and Vercel project. Testnet credentials, wallets and storage must remain separate.
 
-Production URL: https://sticker-pi-mainnet.vercel.app
+## Play and collect
 
-This repository and deployment are Mainnet-only. They must never share a Vercel project, Pi API key, connected app wallet, payment records or Redis namespace with Testnet.
+- A 30-second daily Sticker Catch challenge uses a server-issued seed and run identifier.
+- Score **25 points** to earn one free pack per UTC day. Additional runs improve XP and the daily ranking.
+- The free run pack belongs to the album selected when the run started.
+- Each pack contains three different sticker types; repeated copies across packs become duplicates.
+- Album 1, **Pioneer Collection**, contains the original 24 stickers.
+- Album 2, **Ocean Wonders**, contains 24 new ocean-themed stickers and unlocks after Album 1 reaches 24/24.
+- Selecting Album 2 for the first time grants one free starter pack.
+- Album collections and pack inventories are separate. Switching albums preserves both.
+- Each album has a one-time collector badge, +250 XP and +3 celebration packs for that album.
+- English and Simplified Chinese are available. Daily quests and streak days reset at 00:00 UTC.
 
-## Active features
+## Duplicate conversion
 
-- Pi SDK authentication in Pi Browser with server-side `/v2/me` identity verification
-- Daily 30-second Sticker Catch challenge with a server-issued deterministic seed and short-lived run identifier
-- Daily Top 10 ranked by verified score, accuracy and best combo, with personal position
-- Server-authoritative XP, levels, streaks, quests, packs and collection state
-- 24-sticker Season 1 album with rarity and duplicate tracking
-- One-time server-verified Master Collector reward
-- Optional 0.01 Pi User-to-App Bonus Pack purchase
-- Server-side payment approval, completion, recovery and validation
-- Idempotent gameplay, pack-opening and payment rewards
-- Per-player mutation locks and API rate limits
-- English and Simplified Chinese interface
-- Privacy Policy and Terms of Service
-- Privacy-preserving aggregate backend telemetry with a Pi-owner-only dashboard at `/admin.html`
+Choose a missing sticker in the Duplicates screen of the active album. Costs are 4 extra copies for common, 8 for rare, 16 for epic and 24 for legendary stickers.
 
-## Coming soon
+The server quotes the exact copies to consume, using lower rarities first and retaining one copy of every sticker. Only duplicates from the target album can be consumed. A custom accessible confirmation dialog shows the target, sources and cost before the irreversible conversion.
 
-Peer-to-peer duplicate exchange is **not active**. The Trade screen is informational and clearly marked “Coming soon”. Duplicates are tracked only for a future server-verified exchange feature.
+A durable conversion identifier lets the client recover a lost response. The collection and receipt are written atomically with a snapshot comparison. Recovery stays bound to the target album even if another tab changes selection.
 
-A2U rewards and seasonal community drops are not active in this Mainnet release.
+Peer-to-peer exchange, Mainnet A2U rewards and community drops are not active.
 
-## Pi integration boundaries
+## Pi payments and compatibility
 
-- Pi SDK: `sandbox: false`
-- Accepted payment direction: `user_to_app`
-- Accepted network: `Pi Network`
-- Product identifier: `sticker_bonus_pack_mainnet_v1`
-- Payment amount: `0.01 Pi`
-- Redis namespace: `sticker:mainnet:`
-- A purchased pack is granted only after verified Pi completion
-- Wallet passphrases, private keys and seed phrases are never requested
+- SDK: sandbox false; login through Pi SDK and server-side /v2/me verification.
+- Only user_to_app, Pi Network, 0.01 Pi payments for sticker_bonus_pack_mainnet_v1 are accepted.
+- New purchases include albumId and an album-specific memo in the official payment metadata.
+- Verified payment metadata determines pack delivery, even if album selection changes.
+- Legacy payments without albumId and the original Sticker.pi Bonus Pack memo still deliver to Album 1.
+- The backend checks user, network, direction, amount, product, memo, cancellation state and final transaction verification.
+- Purchase identifiers prevent repeat fulfillment.
+- The app never requests wallet passphrases, private keys or seed phrases.
 
-The app uses Pi SDK authentication inside Pi Browser. The separate OAuth-based Pi Sign-In portal option is not used.
+## Existing-player migration
 
-## Required Vercel environment variables
+Existing collection indices 0–23 remain Album 1; new indices 24–47 belong to Album 2. Legacy packs migrate into packsByAlbum[1]. XP, levels, streaks, badges, paid-purchase records and gameplay receipts are preserved. No reset or destructive database migration is required.
 
-- `PI_API_KEY` — API key belonging only to the paired Mainnet app
-- `UPSTASH_REDIS_REST_URL` — Mainnet storage endpoint
-- `UPSTASH_REDIS_REST_TOKEN` — Mainnet storage token
-- `STICKER_ADMIN_USERNAME` — optional dashboard owner username (defaults to `Giulex84`)
-- `STICKER_METRICS_SECRET` — optional dedicated HMAC secret (falls back to `PI_API_KEY`)
+activeAlbum selects the displayed inventory; packs remains a compatibility alias. New pack-opening requests include albumId. Older requests default to Album 1 and cannot consume Album 2 packs.
 
-Never commit credentials or reuse Testnet values.
+## Storage and environment
 
-## Public documents
+Redis namespace: sticker:mainnet:
 
-- Privacy: https://sticker-pi-mainnet.vercel.app/privacy.html
-- Terms: https://sticker-pi-mainnet.vercel.app/terms.html
+Required Vercel variables:
+- PI_API_KEY: paired Mainnet app key
+- UPSTASH_REDIS_REST_URL
+- UPSTASH_REDIS_REST_TOKEN
 
-Daily state resets at `00:00 UTC`; it is not a rolling 24-hour timer.
-Daily leaderboard entries are retained temporarily and only the best verified result per Pioneer per UTC day is ranked.
+Optional:
+- STICKER_ADMIN_USERNAME: owner username, defaults to Giulex84
+- STICKER_METRICS_SECRET: HMAC key for aggregate metrics, falls back to PI_API_KEY
 
-## Duplicate conversion (1.0.3)
+Never commit or print credentials.
 
-- Common/rare/epic/legendary missing stickers cost 4/8/16/24 extra copies.
-- Server quotes exact sources, using lower rarities first and preserving one copy per owned sticker.
-- Collection and durable per-user conversion receipt commit atomically with a snapshot comparison.
-- A lost response can be recovered with the same conversion identifier; confirmation is required before consuming copies.
-- Completing the album through conversion uses the existing one-time Master Collector reward.
-- Run `npm test` for mocked state/API and UI checks. Live authenticated Pi Browser conversion still requires manual verification.
+## Metrics and public documents
+
+The owner-only dashboard reports daily activity, runs, delivered paid packs, gross purchase volume, duplicate conversions and album completions. Sum of daily users means active user-days, not distinct people over the period. Telemetry is best effort and is not a wallet balance or inventory audit.
+
+Privacy: https://sticker-pi-mainnet.vercel.app/privacy.html
+Terms: https://sticker-pi-mainnet.vercel.app/terms.html
+
+## Validation
+
+Run npm test for mocked UI, state and API tests, including migration, album isolation, starter and completion rewards, replay, lost responses, concurrency, conversion confirmation and legacy/new payment routing. Run node check-admin.cjs for dashboard aggregation tests.
+
+A live authenticated Pi Browser check is still required for mobile appearance and actual album-2 purchase completion. Automated tests do not execute live payments.

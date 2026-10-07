@@ -7,6 +7,8 @@
     "node": "22.x"
   },
   "scripts": {
-    "test": "node check-progress.cjs && node check-conversion.mjs && node check-conversion-ui.cjs"
+    "test": "node check-progress.cjs && node check-conversion.mjs && node check-conversion-ui.cjs && node check-admin.cjs && node tests/check-recovery-ui.cjs && node tests/check-redis.mjs",
+    "test:redis": "node tests/check-redis.mjs",
+    "check:build": "node check-build.cjs"
   }
 }

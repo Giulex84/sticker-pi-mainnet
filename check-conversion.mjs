@@ -11,12 +11,22 @@ globalThis.fetch=async(url,options)=>{
     else{db.set(a[1],a[2]);result='OK'}
   }else if(a[0]==='EVAL'&&a[2]==='1'){
     result=db.get(a[3])===a[4]?Number(db.delete(a[3])):0;
-  }else if(a[0]==='EVAL'&&a[2]==='2'){
-    const [,script,,pk,rk,old,player,receipt]=a;assert.match(script,/redis.call\('SET',KEYS\[2\]/);
-    if(conflict){db.set(pk,JSON.stringify({...JSON.parse(db.get(pk)),xp:999}));conflict=false}
-    result=(db.get(pk)||'')===old&&!db.has(rk)?1:0;
-    if(result){db.set(pk,player);db.set(rk,receipt)}
-    if(loseResponse){loseResponse=false;throw new Error('Response lost after commit')}
+   }else if(a[0]==='EVAL'&&a[2]==='2'){
+    const next=JSON.parse(a[5]),old=db.has(a[3])?JSON.parse(db.get(a[3])):null;
+    const best=!old||next.score>old.score||(next.score===old.score&&next.accuracy>old.accuracy)||(next.score===old.score&&next.accuracy===old.accuracy&&next.bestCombo>old.bestCombo)?next:old;
+    result=JSON.stringify(best);db.set(a[3],result);
+  }else if(a[0]==='EVAL'&&a[2]==='3'){
+    const [,script,,k1,k2,k3,v1,v2,v3,v4]=a;
+    if(script.includes('PFADD'))result=1;
+    else if(script.includes('local old=')){
+      if(conflict){db.set(k1,JSON.stringify({...JSON.parse(db.get(k1)),xp:999}));conflict=false}
+      result=(db.get(k1)||'')===v1&&!db.has(k2)&&db.get(k3)===v4?1:0;
+      if(result){db.set(k1,v2);db.set(k2,v3)}
+      if(loseResponse){loseResponse=false;throw new Error('Response lost after commit')}
+    }else{
+      result=(db.get(k1)||'')===v1&&db.get(k2)===v3&&(!v4||!db.has(k3))?1:0;
+      if(result){db.set(k1,v2);if(v4)db.set(k3,v4)}
+    }
   }else if(['INCR','EXPIRE','ZADD'].includes(a[0])){result=a[0]==='INCR'?(Number(db.get(a[1])||0)+1):1;if(a[0]==='INCR')db.set(a[1],result)}else throw new Error('Unsupported test Redis command '+a[0]);
   return {ok:true,json:async()=>({result})};
 };
@@ -120,3 +130,16 @@ d=await verifiedRun('skill-eligible',{score:30,hits:18,misses:2,bestCombo:15});a
 d=await recordRun(uid,name,{runId:'skill-eligible'});assert.equal(d.player.daily.runsCompleted,3);
 p=d.player;p.daily.date=new Date(Date.now()-86400000).toISOString().slice(0,10);await savePlayer(p);p=await getPlayer(uid,name);assert.equal(p.daily.bestCombo,0);assert.equal(p.daily.bestEligibleAccuracy,0);assert.equal(p.daily.runsCompleted,0);
 console.log('Daily skill goals passed: minimum attempts, exact accuracy threshold, combo, replay and UTC reset.');
+// Payment inputs never override the official server lookup; reject invalid fields.
+const goodPayment={...payment,identifier:'negative-payment',metadata:{product:'sticker_bonus_pack_mainnet_v1'},status:{developer_completed:true,transaction_verified:true},transaction:{txid:'verified-tx'}};
+for(const change of [{user_uid:'attacker'},{amount:.02},{network:'Pi Testnet'},{direction:'app_to_user'},{memo:'wrong'},{metadata:{product:'wrong'}},{metadata:{product:'sticker_bonus_pack_mainnet_v1',albumId:'1'}},{status:{cancelled:true}}]){
+  Object.assign(payment,goodPayment,change);const before=JSON.stringify(await getPlayer(uid,name));const rejected=await pay({action:'complete',paymentId:payment.identifier,txid:'verified-tx',uid,albumId:1,amount:.01});assert.equal(rejected.code,400);assert.equal(JSON.stringify(await getPlayer(uid,name)),before);
+}
+Object.assign(payment,goodPayment);assert.equal((await pay({action:'complete',paymentId:payment.identifier,txid:'wrong-tx'})).code,409);
+Object.assign(payment,goodPayment,{status:{developer_completed:true,transaction_verified:false}});assert.equal((await pay({action:'complete',paymentId:payment.identifier,txid:'verified-tx'})).code,409);
+p=await getPlayer(uid,name);p.activeRun={id:'midnight-run',startedAt:Date.now()-30000,day:'2000-01-01',albumId:1};await savePlayer(p);const beforeMidnight=JSON.stringify(await getPlayer(uid,name));await assert.rejects(()=>recordRun(uid,name,{runId:'midnight-run',score:30,bestCombo:15,hits:20,misses:0}),/UTC day boundary/);assert.equal(JSON.stringify(await getPlayer(uid,name)),beforeMidnight);
+console.log('Negative payment/UTC tests passed: forged metadata/UID/amount/network, cancellation, transaction mismatch, unverified transaction and expired run cannot grant inventory.');
+
+Object.assign(payment,goodPayment,{status:{cancelled:true}});assert.equal((await pay({action:'recover',paymentId:payment.identifier})).body.cancelled,true);
+Object.assign(payment,goodPayment,{user_uid:'other',status:{cancelled:true}});assert.equal((await pay({action:'recover',paymentId:payment.identifier})).code,400);
+console.log('Confirmed cancellation recovery clears a pending request only after server payment ownership/product validation.');

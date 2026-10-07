@@ -984,7 +984,7 @@
         ["🪨","Tide Stone","common"],["🪷","Water Lily","rare"],
         ["🗺️","Sunken Map","epic"],["🏰","Lost Atlantis","legendary"]
       );
-      var albumSwitchBusy=false,paymentFlowBusy=false;
+      var albumSwitchBusy=false,paymentFlowBusy=false,packOpenBusy=false,stateRequestSequence=0,stateAppliedSequence=0;
       function activeAlbum(){return player.activeAlbum===2?2:1}
       function albumIndices(id=activeAlbum()){return Array.from({length:24},(_,i)=>(id===2?24:0)+i)}
       function albumName(id=activeAlbum()){return id===2 ? (lang()==="zh" ? "图鉴 2 · 海洋奇境" : "Album 2 · Ocean Wonders") : (lang()==="zh" ? "图鉴 1 · Pioneer Collection" : "Album 1 · Pioneer Collection")}
@@ -1204,8 +1204,8 @@
         document.getElementById("bonusSubText").textContent=zh ? `0.01 Pi 购买 ${albumName()} 的一个卡包。` : `Buy one pack for ${albumName()} for 0.01 Pi.`;
       }
       async function switchAlbum(id){
-        if(albumSwitchBusy||gameTimer||paymentFlowBusy||pendingPayment||conversionBusy||pendingConversion()) {
-          document.getElementById("activeAlbumHint").textContent=lang()==="zh"?"请先完成当前挑战或恢复转换。":"Finish your run, payment or pending conversion before switching albums.";
+        if(albumSwitchBusy||packOpenBusy||pendingPackRequest()||gameTimer||paymentFlowBusy||pendingPayment||conversionBusy||pendingConversion()) {
+          document.getElementById("activeAlbumHint").textContent=lang()==="zh"?"请先完成当前挑战或恢复转换。":"Finish your run or recover your pending pack, payment or conversion before switching albums.";
           return;
         }
         albumSwitchBusy=true;renderAlbumSelector();
@@ -1263,6 +1263,7 @@
         renderAlbumSelector();
         renderXpPackProgress();
         renderGoals();
+        if(!packOpenBusy&&pendingPackRequest())document.getElementById("openPackBtn").textContent=lang()==="zh"?"恢复卡包":"Recover pack";
         renderStats();
         const isMaster=(player.badges||[]).includes(albumBadge());
         document.getElementById("masterBadge").classList.toggle("hidden",!isMaster);
@@ -1312,6 +1313,7 @@
       async function stateApi(action = "load", payload = {}, retry = true) {
         if (!authData) return;
         lastStateError = "";
+        const sequence=++stateRequestSequence;
         try {
           const r = await fetch("/api/state", {
             method: "POST",
@@ -1323,7 +1325,8 @@
           });
           const d = await r.json();
           if (r.ok) {
-            if (d.player) {
+            if (d.player && sequence>=stateAppliedSequence) {
+              stateAppliedSequence=sequence;
               storageOnline = !!d.storage;
               player = {
                 ...player,
@@ -1761,7 +1764,7 @@
           await loadDailyLeaderboard();
         } else {
           document.getElementById("gameResult").textContent =
-            (lang() === "zh" ? "结果无法验证，进度未更改。" : "Result could not be verified. Your saved progress was not changed.") +
+            (lang() === "zh" ? "无法确认结果，请重新加载以检查进度。" : "Could not confirm the saved result. Reload to check your progress.") +
             (lastStateError ? ` (${lastStateError})` : "");
         }
       }
@@ -1786,19 +1789,28 @@
             .filter(([s]) => s[2] === "common");
         return pool[Math.floor(Math.random() * pool.length)][1];
       }
+      function pendingPackRequest(){
+        try{const r=JSON.parse(localStorage.getItem("sticker-pack:"+player.uid)||"null");return r&&typeof r.openId==="string"&&r.openId.length>0&&r.openId.length<=80&&[1,2].includes(r.albumId)?r:null}catch{return null}
+      }
       async function openPack() {
-        if ((player.packs || 0) < 1) return;
+        if(packOpenBusy||albumSwitchBusy)return;
+        let request=pendingPackRequest();
+        if (!request && (player.packs || 0) < 1) return;
+        packOpenBusy=true;
         const button = document.getElementById("openPackBtn");
         button.disabled = true;
         button.textContent = lang() === "zh" ? "正在开启…" : "Opening…";
         document.getElementById("packReveal").innerHTML = "";
         document.getElementById("packSummary").textContent = "";
-        const openId =
-          globalThis.crypto?.randomUUID?.() ||
-          `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        const d = await stateApi("open_pack", { openId,albumId:activeAlbum() });
-        button.disabled = false;
-        button.textContent = dict[lang()].open;
+        let d;
+        try{
+          request=request||{openId:globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`,albumId:activeAlbum()};
+          localStorage.setItem("sticker-pack:"+player.uid,JSON.stringify(request));
+          d=await stateApi("open_pack",request);
+          if(d?.reveal || /No packs available|Selected album changed|Complete Album 1|Pack identifier belongs/.test(lastStateError))localStorage.removeItem("sticker-pack:"+player.uid);
+          if(!d)document.getElementById("packSummary").textContent="Could not confirm opening. Press Recover pack to check the same request.";
+        }catch(error){document.getElementById("packSummary").textContent=error.message}
+        finally{packOpenBusy=false;button.disabled=false;button.textContent=pendingPackRequest()?(lang()==="zh"?"恢复卡包":"Recover pack"):dict[lang()].open;}
         if (!d?.reveal) return;
         if (d.albumCompleted) showAlbumCelebration(d.albumId||activeAlbum());
         const box = document.getElementById("packReveal");
@@ -1848,8 +1860,10 @@
         if (!r.ok) throw new Error(d.error || "Request failed");
         return d;
       }
+      function clearPendingPayment(){try{localStorage.removeItem("sticker-payment:"+player.uid)}catch{}}
       async function recoverIncomplete() {
         if (!pendingPayment || !authData) return;
+        paymentFlowBusy=true;
         try {
           setPaymentStatus("Recovering incomplete payment…");
           const d = await api({
@@ -1857,19 +1871,19 @@
             paymentId: pendingPayment.identifier || pendingPayment.paymentId,
           });
           if (d.completed) {
-            pendingPayment=null;
+            pendingPayment=null;clearPendingPayment();
             setPaymentStatus("Previous payment completed ✓");
             if (d.player) {
               player = { ...player, ...d.player };
               render();
             }
           } else if (d.cancelled) {
-            pendingPayment = null;
+            pendingPayment = null;clearPendingPayment();
             setPaymentStatus("Previous incomplete payment cleared ✓ You can retry safely.");
           }
         } catch (e) {
           setPaymentStatus(e.message);
-        }
+        }finally{paymentFlowBusy=false;const button=document.getElementById("payBtn");button.disabled=false;button.textContent=pendingPayment?"Recover previous payment":dict[lang()].buy;}
       }
       async function login() {
         const b = document.getElementById("loginBtn");
@@ -1900,6 +1914,7 @@
             const completion = await stateApi("claim_album_reward");
             if (completion?.albumCompleted) showAlbumCelebration();
           }
+          if(!pendingPayment){try{const cached=JSON.parse(localStorage.getItem("sticker-payment:"+player.uid)||"null");if(cached&&typeof cached.identifier==="string"&&cached.identifier.length>0)pendingPayment=cached}catch{}}
           await recoverIncomplete();
         } catch (e) {
           alert(e.message);
@@ -1908,7 +1923,8 @@
       }
       let paymentApprovalFailure = "";
       async function buyPack() {
-        if (!authData) return;
+        if (!authData || paymentFlowBusy) return;
+        if(pendingPayment){await recoverIncomplete();return;}
         const b = document.getElementById("payBtn");
         b.disabled = true;
         paymentApprovalFailure = "";
@@ -1934,17 +1950,14 @@
                 }
               },
               onReadyForServerCompletion: async (paymentId, txid) => {
-                setPaymentStatus("Verifying transaction…");
-                const d = await api({ action: "complete", paymentId, txid });
-                if (d.completed) {
-                  setPaymentStatus("Payment complete ✓ Bonus pack unlocked");
-                  if (d.player) {
-                    player = { ...player, ...d.player };
-                    render();
-                  }
-                  paymentFlowBusy=false;
-                  b.textContent = "Purchased ✓";
-                }
+                pendingPayment={identifier:paymentId};
+                try{localStorage.setItem("sticker-payment:"+player.uid,JSON.stringify(pendingPayment))}catch{}
+                try{
+                  setPaymentStatus("Verifying transaction…");
+                  const d=await api({action:"complete",paymentId,txid});
+                  if(d.completed){pendingPayment=null;clearPendingPayment();setPaymentStatus("Payment complete ✓ Bonus pack unlocked");if(d.player){player={...player,...d.player};render()}b.textContent="Purchased ✓";}
+                }catch(error){setPaymentStatus("Could not confirm delivery. Recover the previous payment: "+error.message)}
+                finally{paymentFlowBusy=false;if(pendingPayment){b.disabled=false;b.textContent="Recover previous payment"}}
               },
               onCancel: () => {
                 paymentFlowBusy=false;

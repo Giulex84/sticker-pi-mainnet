@@ -21,8 +21,8 @@ async function getPayment(id,key){
   return r.json();
 }
 
-function validPayment(p,uid){
-  return p?.user_uid===uid&&p.direction==='user_to_app'&&p.network==='Pi Network'&&Number(p.amount)===AMOUNT&&(p.memo===MEMO&&(p.metadata?.albumId??1)===1||p.memo===`Sticker.pi Album ${p.metadata?.albumId??1} Bonus Pack`)&&p.metadata?.product===PRODUCT&&[1,2].includes(p.metadata?.albumId??1)&&!p.status?.cancelled&&!p.status?.user_cancelled;
+function validPayment(p,uid,allowCancelled=false){
+  return p?.user_uid===uid&&p.direction==='user_to_app'&&p.network==='Pi Network'&&Number(p.amount)===AMOUNT&&(p.memo===MEMO&&(p.metadata?.albumId??1)===1||p.memo===`Sticker.pi Album ${p.metadata?.albumId??1} Bonus Pack`)&&p.metadata?.product===PRODUCT&&[1,2].includes(p.metadata?.albumId??1)&&(allowCancelled||!p.status?.cancelled&&!p.status?.user_cancelled);
 }
 
 async function approve(id,key){
@@ -52,6 +52,9 @@ export default async function handler(req,res){
     const {action,paymentId,txid}=body;
     if(!['approve','complete','recover'].includes(action)||!paymentId)return res.status(400).json({success:false,error:'Invalid payment request'});
     let p=await getPayment(paymentId,apiKey);
+    // A confirmed cancellation can clear a pending client request without delivery.
+    // Identity, amount, network and product still come from the official lookup.
+    if(action==='recover'&&validPayment(p,user.uid,true)&&(p.status?.cancelled||p.status?.user_cancelled))return res.status(200).json({success:true,cancelled:true,completed:false});
     if(!validPayment(p,user.uid))return res.status(400).json({success:false,error:'Payment validation failed'});
     if(!albumUnlocked(await getPlayer(user.uid,user.username),p.metadata?.albumId??1))return res.status(409).json({success:false,error:'Complete Album 1 to unlock Album 2'});
     if(action==='approve'){

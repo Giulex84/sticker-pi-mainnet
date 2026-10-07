@@ -73,7 +73,7 @@ Terms: https://sticker-pi-mainnet.vercel.app/terms.html
 
 ## Validation
 
-Run npm test for mocked UI, state and API tests, including migration, album isolation, starter and completion rewards, replay, lost responses, concurrency, conversion confirmation and legacy/new payment routing. Run node check-admin.cjs for dashboard aggregation tests.
+Run npm test for mocked UI, state and API tests, including migration, album isolation, starter and completion rewards, replay, lost responses, concurrency, conversion confirmation and legacy/new payment routing. Dashboard aggregation (`check-admin.cjs`) and recovery UI checks are included.
 
 A live authenticated Pi Browser check is still required for mobile appearance and actual album-2 purchase completion. Automated tests do not execute live payments.
 
@@ -84,3 +84,16 @@ Verified run XP advances a separate 500-XP pack meter. Up to three XP packs can 
 The admin dashboard reports XP packs and player-days with one versus two or more completed runs. New telemetry begins at release; it does not measure multi-day retention.
 
 Daily skill goals: complete three verified runs, reach 90% accuracy with at least 20 attempts in one run, and reach a 15-hit combo. These goals grant no additional packs. Existing daily and 500 XP pack rewards are unchanged. Accuracy uses the unrounded ratio, floored for display; counters reset at 00:00 UTC.
+
+
+## Mainnet persistence and recovery
+
+Player writes check both the saved snapshot and the current lock owner before committing. Expired writers cannot replace newer inventory, runs or payment delivery. A Redis command error or malformed player JSON fails closed; no default player is saved over unreadable existing data.
+
+New pack openings retain a separate per-user durable receipt, committed atomically with inventory. The recent 20 receipts remain in the player record for compatibility. Pending client openings keep the same identifier and album across a lost reply, including recovery when the displayed pack balance is zero. Existing cached receipts remain honoured; identifiers already evicted by earlier releases cannot be reconstructed or backfilled safely.
+
+Conversion keeps its existing atomic snapshot comparison and now also verifies lock ownership. Daily best-result comparison and ranking writes are atomic; retrying a newly recorded run repairs a ranking update that failed after player progress committed, without adding XP or rewards again. Run telemetry uses the server-selected run day across midnight. Telemetry remains best effort: a process interruption between inventory commit and telemetry may omit an event, and aggregate counts are not a financial or inventory ledger.
+
+When payment completion cannot be confirmed, the client offers recovery of the previous payment instead of creating another purchase. A cancellation confirmed by the server lookup clears the pending request without granting inventory. Pending payment identifiers are cached for reload recovery; album delivery still depends solely on the official payment lookup validated by the server.
+
+`npm run check:build` checks every inline script, native ESM endpoint/module and deployment JSON; this static project has no framework bundle. `REDIS_TEST_SERVER=/path/to/redis-server npm test` also runs actual Lua against a fresh local Redis process with persistence disabled. Without that variable, the Redis suite reports an explicit skip. `npm run test:redis` runs only that suite. Tests use dummy credentials and simulated Pi responses and never call Mainnet payments or storage.

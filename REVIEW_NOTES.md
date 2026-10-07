@@ -27,7 +27,7 @@ Daily ranking uses the best verified UTC-day score, then accuracy and combo. It 
 
 ## Validation limits
 
-Mocked UI and backend regression tests cover migration, album isolation, reward idempotence, conversion recovery and payment routing. Live authenticated Pi Browser visual verification and an Album 2 payment require manual checks. Peer-to-peer exchange and Mainnet A2U rewards are not active.
+Mocked UI/API and isolated local Redis Lua regression tests cover migration, album isolation, reward idempotence, conversion recovery and payment routing. Live authenticated Pi Browser visual verification and an Album 2 payment require manual checks. Peer-to-peer exchange and Mainnet A2U rewards are not active.
 
 ## Gameplay XP packs (v1.1.2)
 
@@ -36,3 +36,8 @@ Verified run XP advances a separate 500-XP pack meter. Up to three XP packs can 
 The admin dashboard reports XP packs and player-days with one versus two or more completed runs. New telemetry begins at release; it does not measure multi-day retention.
 
 Daily skill goals: complete three verified runs, reach 90% accuracy with at least 20 attempts in one run, and reach a 15-hit combo. These goals grant no additional packs. Existing daily and 500 XP pack rewards are unchanged. Accuracy uses the unrounded ratio, floored for display; counters reset at 00:00 UTC.
+
+
+## Recovery safeguards
+
+Inventory writes reject stale lock owners and changed snapshots. New pack openings keep durable receipts beyond the recent receipt cache. Lost opening and payment-completion replies can be recovered without starting a second operation. Unreadable player records are preserved for review rather than reset. Daily ranking writes compare the best result atomically; retries of newly recorded runs repair a ranking failure without granting progression twice. Prices, album unlocks and reward quantities are unchanged.

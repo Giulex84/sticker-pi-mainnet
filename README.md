@@ -97,3 +97,8 @@ Conversion keeps its existing atomic snapshot comparison and now also verifies l
 When payment completion cannot be confirmed, the client offers recovery of the previous payment instead of creating another purchase. A cancellation confirmed by the server lookup clears the pending request without granting inventory. Pending payment identifiers are cached for reload recovery; album delivery still depends solely on the official payment lookup validated by the server.
 
 `npm run check:build` checks every inline script, native ESM endpoint/module and deployment JSON; this static project has no framework bundle. `REDIS_TEST_SERVER=/path/to/redis-server npm test` also runs actual Lua against a fresh local Redis process with persistence disabled. Without that variable, the Redis suite reports an explicit skip. `npm run test:redis` runs only that suite. Tests use dummy credentials and simulated Pi responses and never call Mainnet payments or storage.
+
+
+## Minimal analytics release
+
+New analytics collect successful Mainnet Pi logins, distinct daily accounts and returning accounts only. Other analytics events are ignored without storage writes. Legacy data is preserved; missing historical return counts are not reconstructed. Reports distinguish login-only collection from older activity counters. The Arena October 20, 2026 incident is marked as partial data, not backfilled. Payment receipts and gameplay persistence are unchanged.

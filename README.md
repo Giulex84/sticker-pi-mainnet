@@ -2,6 +2,16 @@
 
 Sticker.pi is a Pi SDK collectible skill game with daily challenges and permanent themed albums.
 
+## Evidence and release alignment — 2026-10-31
+
+- Technical release: 1.1.2. This is separate from Pi SDK version 2.0 and the Developer Portal listing version.
+- Production source baseline: `3ac95fa851bf767ebf871109fc78206cdc122f13`; Vercel production was READY at verification. This establishes build/source mapping, not authenticated end-to-end functionality.
+- User-supplied Developer Portal screenshots: Mainnet Ecosystem Listing In Review; listing version update 1.0.0 → 1.0.1 pending; PiNet Active; app-wallet application pending; multisig Pending Pi Core Team Review.
+- Auction domain: stickers.pi — Claim Pending in supplied screenshots. Web URL ownership verification and PiNet activation do not establish auction-domain claim approval.
+- No reviewer correction request or rejection reason has been acquired. Pending status alone does not identify a technical blocker.
+- December 19, 2026 is a community-reported planning target, not an officially verified deadline.
+- Portal updates require the owner's specific approval. Preserve pending requests; do not cancel them solely to equalize version labels.
+
 ## Release and deployment
 
 - Release: **v1.1.2**
@@ -102,3 +112,4 @@ When payment completion cannot be confirmed, the client offers recovery of the p
 ## Minimal analytics release
 
 New analytics collect successful Mainnet Pi logins, distinct daily accounts and returning accounts only. Other analytics events are ignored without storage writes. Legacy data is preserved; missing historical return counts are not reconstructed. Reports distinguish login-only collection from older activity counters. The Arena October 20, 2026 incident is marked as partial data, not backfilled. Payment receipts and gameplay persistence are unchanged.
+

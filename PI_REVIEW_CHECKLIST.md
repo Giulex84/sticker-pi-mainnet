@@ -1,5 +1,9 @@
 # Sticker.pi — Mainnet Review Checklist
 
+## Evidence scope — 2026-10-31
+
+Checked items below include earlier recorded validations; they are not a fresh end-to-end production certification. See README for current source, portal and auction-claim distinctions. Mainnet app-wallet and multisig applications are both pending in supplied screenshots. New real payments are not authorized by this checklist.
+
 ## Verified configuration
 
 - [x] Separate Mainnet GitHub repository
@@ -9,13 +13,13 @@
 - [x] Mainnet Redis namespace and server-authoritative storage
 - [x] Pi SDK configured with `sandbox: false`
 - [x] Payment restricted to `user_to_app`, `Pi Network`, 0.01 Pi and the Mainnet product identifier
-- [x] Domain ownership validated
+- [x] Production web URL ownership validated (not approval of the stickers.pi auction claim)
 - [x] PiNet subdomain created
 - [x] Pi SDK authentication completed in Pi Browser
 - [x] Real 0.01 Pi U2A purchase completed
 - [x] Purchased pack granted exactly once
 - [x] Privacy and Terms routes available
-- [x] Release version aligned to `v1.1.2`
+- [x] Repository/frontend release aligned to `v1.1.2`; Portal version 1.0.1 update remains pending
 
 ## Repository safeguards
 
@@ -59,7 +63,7 @@
 - [x] Custom conversion dialog supports cancel, Escape and keyboard focus containment
 - [ ] Verify mobile modal appearance in Pi Browser
 - [ ] Complete Album 1 and select Ocean Wonders in Pi Browser
-- [ ] Verify a real Album 2 purchase and persistence after reload
+- [ ] Album 2 live-payment verification remains unproven; any new real payment requires separate explicit authorization
 
 ## Gameplay XP packs (v1.1.1)
 
@@ -86,3 +90,4 @@ These checks do not certify historical production records or replace the existin
 - [ ] Verify 4/4 bonus and two-line leaderboard rows in Pi Browser
 
 Players already at 4/4 receive the bonus on their next valid run that UTC day. No payment or extra XP is required.
+

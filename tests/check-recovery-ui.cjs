@@ -2,7 +2,7 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 const html=fs.readFileSync('index.html','utf8'),script=html.match(/<script>\s*([\s\S]*?)<\/script>/)[1],cache=new Map(),els=new Map();
 function node(){return {textContent:'',innerHTML:'',style:{},classList:{toggle(){},add(){},remove(){},contains(){return false}},appendChild(){},setAttribute(){},focus(){}}}function el(id){if(!els.has(id))els.set(id,node());return els.get(id)}
 let callbacks,created=0,requests=[],lost=true,hold;
-const ctx={Pi:{init(){},createPayment:async(data,c)=>{callbacks=c;created++}},document:{addEventListener(){},body:{style:{}},documentElement:{},getElementById:el,querySelectorAll:()=>[],createElement:node},localStorage:{getItem:k=>cache.get(k)||null,setItem:(k,v)=>cache.set(k,v),removeItem:k=>cache.delete(k)},navigator:{},location:{},console,crypto:{randomUUID:crypto.randomUUID},queueMicrotask,setTimeout,clearTimeout,setInterval,clearInterval,requestAnimationFrame:f=>f(),fetch:async(url,o)=>{
+const ctx={URLSearchParams,Headers,Pi:{init(){},createPayment:async(data,c)=>{callbacks=c;created++}},document:{addEventListener(){},body:{style:{}},documentElement:{},getElementById:el,querySelectorAll:()=>[],createElement:node},localStorage:{getItem:k=>cache.get(k)||null,setItem:(k,v)=>cache.set(k,v),removeItem:k=>cache.delete(k)},navigator:{},location:{},console,crypto:{randomUUID:crypto.randomUUID},queueMicrotask,setTimeout,clearTimeout,setInterval,clearInterval,requestAnimationFrame:f=>f(),fetch:async(url,o)=>{
  const body=JSON.parse(o.body);requests.push(body);
  if(body.action==='open_pack'){if(hold)await hold;if(lost){lost=false;throw Error('Reply lost')};return{ok:true,json:async()=>({storage:true,player:{uid:'tester',packs:0,activeAlbum:1},reveal:[0,1,2],alreadyOpened:true})}}
  if(body.action==='complete')throw Error('Payment reply lost');
@@ -17,3 +17,4 @@ await ctx.buyPack();assert.equal(created,1);await callbacks.onReadyForServerComp
 const pending=[];ctx.fetch=()=>new Promise(r=>pending.push(r));const old=ctx.stateApi('load'),fresh=ctx.stateApi('load');pending[1]({ok:true,json:async()=>({storage:true,player:{packs:9}})});await fresh;pending[0]({ok:true,json:async()=>({storage:true,player:{packs:1}})});await old;assert.equal(ctx.check.player().packs,9);
 console.log('UI recovery: double tap, lost pack response with same ID/album and zero balance, pending payment recovery without second payment, stale state response passed.');
 })().catch(e=>{console.error(e);process.exitCode=1});
+

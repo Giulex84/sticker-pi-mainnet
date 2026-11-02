@@ -1,7 +1,8 @@
+import {ownerPreviewHandler} from '../lib/owner-preview.js';
 import {verifyPiUser,apiError} from '../lib/pi.js';
 import {getPlayer,startRun,recordRun,openPlayerPack,claimAlbumReward,getDailyLeaderboard,rateLimit,storageEnabled,serverDay,conversionCatalog,quoteDuplicateConversion,convertDuplicates,selectPlayerAlbum} from '../lib/store.js';
 import {safeRecordMetric} from '../lib/metrics.js';
-export default async function handler(req,res){
+async function handler(req,res){
   if(!['GET','POST'].includes(req.method)){res.setHeader('Allow','GET, POST');return res.status(405).json({success:false,error:'Method not allowed'})}
   try{
     const user=await verifyPiUser(req),body=req.body||{},action=req.method==='GET'?'load':body.action||'load';
@@ -20,3 +21,6 @@ export default async function handler(req,res){
     return res.status(400).json({success:false,error:'Invalid state action'});
   }catch(error){return apiError(res,error)}
 }
+
+
+export default ownerPreviewHandler(handler);

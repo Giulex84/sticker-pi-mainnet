@@ -2,7 +2,7 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 const html=fs.readFileSync('index.html','utf8'),script=html.match(/<script>\s*([\s\S]*?)<\/script>/)[1];
 const elements=new Map(),cache=new Map(),requests=[];let approve=true,loseResponse=false;let saved={uid:'tester',collection:{0:5},duplicates:{0:4},packs:0,daily:{bestScore:0,newUnique:0,packsOpened:0},stats:{}};
 function element(id){if(!elements.has(id))elements.set(id,{setAttribute(){},focus(){},textContent:'',innerHTML:'',style:{},children:[],classList:{toggle(){},add(){},remove(){},contains(){return true}},appendChild(x){this.children.push(x)}});return elements.get(id)}
-const ctx={Pi:{init(){}},document:{addEventListener(){},body:{style:{}},documentElement:{},getElementById:element,querySelectorAll(){return[]},createElement(){return {children:[],appendChild(x){this.children.push(x)}}}},localStorage:{getItem:k=>cache.get(k)||null,setItem:(k,v)=>cache.set(k,v),removeItem:k=>cache.delete(k)},crypto:{randomUUID:crypto.randomUUID},confirm:text=>{assert.match(text,/4 duplicate copies/);assert.match(text,/4 × Moon Dream/);return approve},navigator:{},location:{},console,queueMicrotask,setTimeout,clearTimeout,setInterval,clearInterval,requestAnimationFrame:f=>f(),fetch:async(url,options)=>{
+const ctx={URLSearchParams,Headers,Pi:{init(){}},document:{addEventListener(){},body:{style:{}},documentElement:{},getElementById:element,querySelectorAll(){return[]},createElement(){return {children:[],appendChild(x){this.children.push(x)}}}},localStorage:{getItem:k=>cache.get(k)||null,setItem:(k,v)=>cache.set(k,v),removeItem:k=>cache.delete(k)},crypto:{randomUUID:crypto.randomUUID},confirm:text=>{assert.match(text,/4 duplicate copies/);assert.match(text,/4 × Moon Dream/);return approve},navigator:{},location:{},console,queueMicrotask,setTimeout,clearTimeout,setInterval,clearInterval,requestAnimationFrame:f=>f(),fetch:async(url,options)=>{
   assert.equal(url,'/api/state');const body=JSON.parse(options.body);requests.push(body);
   let d;
   if(body.action==='conversion_quote')d={target:2,cost:4,consumed:[{index:0,count:4}],quote:'test-quote',player:saved};
@@ -23,3 +23,4 @@ await ctx.check.recover();assert.equal(ctx.check.pending(),null);
 const submitted=requests.filter(x=>x.action==='convert_duplicates');assert.equal(submitted.length,2);assert.equal(submitted[0].conversionId,submitted[1].conversionId);assert.match(element('conversionStatus').textContent,/added to your album/);
 console.log('UI conversion tests passed: server quote, exact-copy confirmation, cancellation, persisted uncertain request and recovery using the same identifier.');
 })().catch(e=>{console.error(e);process.exitCode=1});
+

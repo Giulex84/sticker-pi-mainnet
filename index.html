@@ -923,6 +923,26 @@
       </div>
     </div>
     <script>
+      const ownerPreview = new URLSearchParams(location.search).get('ownerPreview') === '1';
+      const gameStorage = {
+        getItem: key => localStorage.getItem((ownerPreview ? 'owner-preview:v1:' : '') + key),
+        setItem: (key, value) => localStorage.setItem((ownerPreview ? 'owner-preview:v1:' : '') + key, value),
+        removeItem: key => localStorage.removeItem((ownerPreview ? 'owner-preview:v1:' : '') + key)
+      };
+      function gameFetch(url, options = {}) {
+        const headers = new Headers(options.headers || {});
+        if (ownerPreview) headers.set('X-Sticker-Owner-Preview', '1');
+        return fetch(url, {...options, headers, cache:'no-store'});
+      }
+      if (ownerPreview) {
+        const banner = document.createElement('div');
+        banner.setAttribute('role', 'status');
+        banner.style.cssText='padding:16px;background:#553511;color:white;text-align:center';
+        banner.append('PRIVATE NEW-PLAYER PREVIEW · Giulex84 only · Separate progress · No payments or public metrics. ');
+        const exit=document.createElement('a');exit.href=location.pathname;exit.textContent='Return to my real account';exit.style.color='white';banner.append(exit);
+        document.body.prepend(banner);
+        document.getElementById('payBtn').hidden=true;
+      }
       Pi.init({ version: "2.0", sandbox: false });
       let authData = null,
         pendingPayment = null,
@@ -1147,10 +1167,10 @@
         },
       };
       function lang() {
-        return localStorage.getItem("sticker-lang") || "en";
+        return gameStorage.getItem("sticker-lang") || "en";
       }
       function setLang(l) {
-        localStorage.setItem("sticker-lang", l);
+        gameStorage.setItem("sticker-lang", l);
         document.documentElement.lang = l === "zh" ? "zh" : "en";
         document.querySelectorAll("[data-i18n]").forEach((el) => {
           const k = el.dataset.i18n;
@@ -1222,12 +1242,12 @@
         player.level = Math.max(1, Math.floor((player.xp || 0) / 100) + 1);
       }
       function saveLocal() {
-        localStorage.setItem("sticker-player", JSON.stringify(player));
+        gameStorage.setItem("sticker-player", JSON.stringify(player));
       }
       function loadLocal() {
         try {
           const p = JSON.parse(
-            localStorage.getItem("sticker-player") || "null",
+            gameStorage.getItem("sticker-player") || "null",
           );
           if (p)
             player = {
@@ -1319,7 +1339,7 @@
         lastStateError = "";
         const sequence=++stateRequestSequence;
         try {
-          const r = await fetch("/api/state", {
+          const r = await gameFetch("/api/state", {
             method: "POST",
             headers: {
               Authorization: "Bearer " + authData.accessToken,
@@ -1392,7 +1412,7 @@
       let conversionBusy = false, conversionOptions = null;
       function conversionStorageKey() { return "sticker-conversion:" + player.uid; }
       function pendingConversion() {
-        try { const raw=JSON.parse(localStorage.getItem(conversionStorageKey()) || "null"); return raw && Number.isInteger(raw.target) && typeof raw.conversionId==="string" && typeof raw.quote==="string" ? raw : null; } catch { return null; }
+        try { const raw=JSON.parse(gameStorage.getItem(conversionStorageKey()) || "null"); return raw && Number.isInteger(raw.target) && typeof raw.conversionId==="string" && typeof raw.quote==="string" ? raw : null; } catch { return null; }
       }
       function renderConversionOptions() {
         const zh=lang()==="zh", pending=pendingConversion();
@@ -1454,7 +1474,7 @@
           if(!plan)throw new Error(lastStateError || "Could not prepare conversion.");
           if(!await openConversionDialog(plan))return;
           const request={target,quote:plan.quote,conversionId:crypto.randomUUID()};
-          localStorage.setItem(conversionStorageKey(),JSON.stringify(request));
+          gameStorage.setItem(conversionStorageKey(),JSON.stringify(request));
           await submitConversion(request);
         } catch(e){document.getElementById("conversionStatus").textContent=e.message;}
         finally {conversionBusy=false;await loadConversionOptions();renderConversionOptions();}
@@ -1469,15 +1489,15 @@
       async function submitConversion(request) {
         const status=document.getElementById("conversionStatus");
         status.textContent=lang()==="zh" ? "正在保存转换…" : "Saving conversion…";
-        const r=await fetch("/api/state",{method:"POST",headers:{Authorization:"Bearer "+authData.accessToken,"Content-Type":"application/json"},body:JSON.stringify({action:"convert_duplicates",...request})});
+        const r=await gameFetch("/api/state",{method:"POST",headers:{Authorization:"Bearer "+authData.accessToken,"Content-Type":"application/json"},body:JSON.stringify({action:"convert_duplicates",...request})});
         const d=await r.json();
         if(!r.ok){
           // These explicit rejections occur before the atomic commit.
-          if(r.status===400 || (r.status===409 && /already own|duplicates changed|collection changed|Not enough/.test(d.error||"")))localStorage.removeItem(conversionStorageKey());
+          if(r.status===400 || (r.status===409 && /already own|duplicates changed|collection changed|Not enough/.test(d.error||"")))gameStorage.removeItem(conversionStorageKey());
           throw new Error(d.error || "Could not confirm conversion. Use recovery to check again.");
         }
         if(!d.player || d.target!==request.target)throw new Error("Unexpected response. Recover the previous conversion.");
-        localStorage.removeItem(conversionStorageKey());
+        gameStorage.removeItem(conversionStorageKey());
         player={...player,...d.player};render();renderAlbum();renderDupes();
         status.textContent=lang()==="zh" ? `已获得 ${stickers[d.target][1]} ✓` : `${stickers[d.target][1]} added to your album ✓`;
         if(d.albumCompleted&&!d.alreadyConverted)showAlbumCelebration(d.albumId||activeAlbum());
@@ -1794,7 +1814,7 @@
         return pool[Math.floor(Math.random() * pool.length)][1];
       }
       function pendingPackRequest(){
-        try{const r=JSON.parse(localStorage.getItem("sticker-pack:"+player.uid)||"null");return r&&typeof r.openId==="string"&&r.openId.length>0&&r.openId.length<=80&&[1,2].includes(r.albumId)?r:null}catch{return null}
+        try{const r=JSON.parse(gameStorage.getItem("sticker-pack:"+player.uid)||"null");return r&&typeof r.openId==="string"&&r.openId.length>0&&r.openId.length<=80&&[1,2].includes(r.albumId)?r:null}catch{return null}
       }
       async function openPack() {
         if(packOpenBusy||albumSwitchBusy)return;
@@ -1809,9 +1829,9 @@
         let d;
         try{
           request=request||{openId:globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random().toString(36).slice(2)}`,albumId:activeAlbum()};
-          localStorage.setItem("sticker-pack:"+player.uid,JSON.stringify(request));
+          gameStorage.setItem("sticker-pack:"+player.uid,JSON.stringify(request));
           d=await stateApi("open_pack",request);
-          if(d?.reveal || /No packs available|Selected album changed|Complete Album 1|Pack identifier belongs/.test(lastStateError))localStorage.removeItem("sticker-pack:"+player.uid);
+          if(d?.reveal || /No packs available|Selected album changed|Complete Album 1|Pack identifier belongs/.test(lastStateError))gameStorage.removeItem("sticker-pack:"+player.uid);
           if(!d)document.getElementById("packSummary").textContent="Could not confirm opening. Press Recover pack to check the same request.";
         }catch(error){document.getElementById("packSummary").textContent=error.message}
         finally{packOpenBusy=false;button.disabled=false;button.textContent=pendingPackRequest()?(lang()==="zh"?"恢复卡包":"Recover pack"):dict[lang()].open;}
@@ -1852,7 +1872,7 @@
         document.getElementById("paymentStatus").textContent = t || "";
       }
       async function api(body) {
-        const r = await fetch("/api/auth", {
+        const r = await gameFetch("/api/auth", {
           method: "POST",
           headers: {
             Authorization: "Bearer " + authData.accessToken,
@@ -1864,7 +1884,7 @@
         if (!r.ok) throw new Error(d.error || "Request failed");
         return d;
       }
-      function clearPendingPayment(){try{localStorage.removeItem("sticker-payment:"+player.uid)}catch{}}
+      function clearPendingPayment(){try{gameStorage.removeItem("sticker-payment:"+player.uid)}catch{}}
       async function recoverIncomplete() {
         if (!pendingPayment || !authData) return;
         paymentFlowBusy=true;
@@ -1894,12 +1914,12 @@
         try {
           b.disabled = true;
           authData = await Pi.authenticate(
-            ["username", "payments"],
+            ownerPreview ? ["username"] : ["username", "payments"],
             (payment) => {
-              pendingPayment = payment;
+              if (!ownerPreview) pendingPayment = payment;
             },
           );
-          const r = await fetch("/api/auth", {
+          const r = await gameFetch("/api/auth", {
             method: "POST",
             headers: { Authorization: "Bearer " + authData.accessToken },
           });
@@ -1918,8 +1938,8 @@
             const completion = await stateApi("claim_album_reward");
             if (completion?.albumCompleted) showAlbumCelebration();
           }
-          if(!pendingPayment){try{const cached=JSON.parse(localStorage.getItem("sticker-payment:"+player.uid)||"null");if(cached&&typeof cached.identifier==="string"&&cached.identifier.length>0)pendingPayment=cached}catch{}}
-          await recoverIncomplete();
+          if(!pendingPayment){try{const cached=JSON.parse(gameStorage.getItem("sticker-payment:"+player.uid)||"null");if(cached&&typeof cached.identifier==="string"&&cached.identifier.length>0)pendingPayment=cached}catch{}}
+          if (!ownerPreview) await recoverIncomplete();
         } catch (e) {
           alert(e.message);
           b.disabled = false;
@@ -1927,6 +1947,7 @@
       }
       let paymentApprovalFailure = "";
       async function buyPack() {
+        if (ownerPreview) { setPaymentStatus("Payments are disabled in private preview."); return; }
         if (!authData || paymentFlowBusy) return;
         if(pendingPayment){await recoverIncomplete();return;}
         const b = document.getElementById("payBtn");
@@ -1955,7 +1976,7 @@
               },
               onReadyForServerCompletion: async (paymentId, txid) => {
                 pendingPayment={identifier:paymentId};
-                try{localStorage.setItem("sticker-payment:"+player.uid,JSON.stringify(pendingPayment))}catch{}
+                try{gameStorage.setItem("sticker-payment:"+player.uid,JSON.stringify(pendingPayment))}catch{}
                 try{
                   setPaymentStatus("Verifying transaction…");
                   const d=await api({action:"complete",paymentId,txid});
@@ -2003,3 +2024,4 @@
     </script>
   </body>
 </html>
+

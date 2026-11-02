@@ -1,3 +1,4 @@
+import {ownerPreviewHandler} from '../lib/owner-preview.js';
 import {verifyPiUser,apiError} from '../lib/pi.js';
 import {grantPaidPack,rateLimit,getPlayer,albumUnlocked} from '../lib/store.js';
 import {safeRecordMetric} from '../lib/metrics.js';
@@ -40,7 +41,7 @@ async function complete(id,txid,key){
   if(!r.ok){const t=await r.text();if(!t.includes('already_completed')){const e=new Error('Payment completion failed');e.status=r.status;throw e}}
 }
 
-export default async function handler(req,res){
+async function handler(req,res){
   if(req.method!=='POST'){res.setHeader('Allow','POST');return res.status(405).json({success:false,error:'Method not allowed'})}
   try{
     const user=await verifyPiUser(req);
@@ -80,3 +81,6 @@ export default async function handler(req,res){
     return res.status(safeStatus).json({success:false,error:error?.message||'Payment service error'});
   }
 }
+
+
+export default ownerPreviewHandler(handler, {payments:true});

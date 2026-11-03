@@ -1,7 +1,7 @@
 import {ownerPreviewHandler} from '../lib/owner-preview.js';
 import {verifyPiUser,apiError} from '../lib/pi.js';
 import {grantPaidPack,rateLimit,getPlayer,albumUnlocked} from '../lib/store.js';
-import {safeRecordMetric} from '../lib/metrics.js';
+import {safeRecordMetric,recordLoginMetricWithStatus} from '../lib/metrics.js';
 
 const PI_API_BASE='https://api.minepi.com/v2';
 const AMOUNT=0.01;
@@ -47,7 +47,7 @@ async function handler(req,res){
     const user=await verifyPiUser(req);
     await rateLimit(user.uid,'payment',20,60);
     const body=req.body||{};
-    if(!body.action){await safeRecordMetric(user.uid,'login');return res.status(200).json({success:true,user:{uid:user.uid,username:user.username}})}
+    if(!body.action){const loginMetric=await recordLoginMetricWithStatus(user.uid);return res.status(200).json({success:true,user:{uid:user.uid,username:user.username},loginMetric})}
     const apiKey=(process.env.PI_API_KEY||'').trim();
     if(!apiKey)return res.status(503).json({success:false,error:'Payment service unavailable'});
     const {action,paymentId,txid}=body;

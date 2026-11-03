@@ -10,6 +10,7 @@
     "test": "node check-progress.cjs && node check-conversion.mjs && node check-conversion-ui.cjs && node check-admin.cjs && node tests/check-recovery-ui.cjs && node tests/check-redis.mjs && node tests/check-attendance.cjs",
     "test:redis": "node tests/check-redis.mjs",
     "check:build": "node check-build.cjs",
-    "test:owner-preview": "node tests/check-owner-preview.mjs && node tests/check-owner-preview-ui.cjs"
+    "test:owner-preview": "node tests/check-owner-preview.mjs && node tests/check-owner-preview-ui.cjs",
+    "test:login-metrics": "node tests/check-login-metrics.mjs"
   }
 }

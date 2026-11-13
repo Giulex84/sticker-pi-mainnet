@@ -1,5 +1,12 @@
 # Sticker.pi Mainnet
 
+## App documentation · 14 November 2026
+
+[Privacy Policy](privacy.html) · [Terms of Service](terms.html)
+
+The privacy notice covers public gameplay rankings and sign-in metrics. The terms describe the optional 0.01 Pi Bonus Pack.
+
+
 Sticker.pi is a Pi SDK collectible skill game with daily challenges and permanent themed albums.
 
 ## Evidence and release alignment — 2026-10-31

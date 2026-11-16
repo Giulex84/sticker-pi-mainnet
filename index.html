@@ -651,6 +651,9 @@
             Reset view
           </button>
         </div>
+        <section id="starterPack" class="section hidden" aria-label="Getting started">
+          <button id="starterPackBtn" class="primary wide">Open your first free pack</button>
+        </section>
         <div class="albumSelector" aria-label="Select album">
           <button id="album1Btn" class="secondary albumChoice" onclick="switchAlbum(1)"></button>
           <button id="album2Btn" class="secondary albumChoice" onclick="switchAlbum(2)"></button>
@@ -823,6 +826,7 @@
               Open pack
             </button>
             <div id="packReveal" class="packReveal"></div>
+            <button id="starterPlayBtn" class="primary wide hidden">Play for your daily pack</button>
             <div id="packSummary" class="packSummary"></div>
           </div>
           <div class="tile" style="margin-top: 10px">
@@ -1261,6 +1265,16 @@
       }
       function render() {
         calcLevel();
+        const waitingForFirstPack = activeAlbum() === 1 && !player.stats?.packsOpened;
+        document.getElementById("starterPack").classList.toggle(
+          "hidden", !waitingForFirstPack || (!(player.packs > 0) && !pendingPackRequest())
+        );
+        document.getElementById("starterPackBtn").textContent = pendingPackRequest()
+          ? (lang() === "zh" ? "恢复卡包" : "Recover pack")
+          : (lang() === "zh" ? "开启首个免费卡包" : "Open your first free pack");
+        const starterPlay = document.getElementById("starterPlayBtn");
+        starterPlay.textContent = lang() === "zh" ? "挑战每日卡包" : "Play for your daily pack";
+        starterPlay.classList.toggle("hidden", activeAlbum() !== 1 || player.stats?.packsOpened !== 1 || !!player.stats?.plays);
         document.getElementById("levelValue").textContent = player.level;
         document.getElementById("streakValue").textContent =
           (player.streak || 0) + " 🔥";
@@ -2019,6 +2033,11 @@
       document.getElementById("payBtn").onclick = buyPack;
       document.getElementById("startGameBtn").onclick = startGame;
       document.getElementById("openPackBtn").onclick = openPack;
+      document.getElementById("starterPackBtn").onclick = () => {
+        show("packs");
+        openPack();
+      };
+      document.getElementById("starterPlayBtn").onclick = () => show("play");
       document.getElementById("closeCelebration").onclick = () => document.getElementById("albumCelebration").classList.add("hidden");
       renderAlbum();
     </script>

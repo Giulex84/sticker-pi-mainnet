@@ -83,7 +83,7 @@ Never commit or print credentials.
 
 ## Metrics and public documents
 
-The owner-only dashboard reports daily activity, runs, delivered paid packs, gross purchase volume, duplicate conversions and album completions. Sum of daily users means active user-days, not distinct people over the period. Telemetry is best effort and is not a wallet balance or inventory audit.
+The owner-only dashboard reports successful sign-ins, daily authenticated accounts and accounts seen on an earlier UTC day. Runs, purchases, conversions and album-completion analytics are historical only. Sum of daily users means active user-days, not distinct people over the period. Telemetry is best effort and is not a wallet balance or inventory audit.
 
 Privacy: https://sticker-pi-mainnet.vercel.app/privacy.html
 Terms: https://sticker-pi-mainnet.vercel.app/terms.html
@@ -118,5 +118,9 @@ When payment completion cannot be confirmed, the client offers recovery of the p
 
 ## Minimal analytics release
 
-New analytics collect successful Mainnet Pi logins, distinct daily accounts and returning accounts only. Other analytics events are ignored without storage writes. Legacy data is preserved; missing historical return counts are not reconstructed. Reports distinguish login-only collection from older activity counters. The Arena October 20, 2026 incident is marked as partial data, not backfilled. Payment receipts and gameplay persistence are unchanged.
+New analytics collect successful Mainnet Pi logins, distinct daily accounts and returning accounts only. Other analytics events are ignored without storage writes. Legacy data is preserved; missing historical return counts are not reconstructed. Reports distinguish login-only collection from older activity counters. Payment receipts and gameplay persistence are unchanged.
 
+
+## First-session guidance · 18 November 2026
+
+A new player starts with one free pack. Before the first pack is opened, the dashboard highlights the existing recoverable pack-opening action. After the first opening, players can go directly to the daily challenge. The normal server-verified reward and purchase paths remain the source of truth.

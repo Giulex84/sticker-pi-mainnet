@@ -32,3 +32,8 @@ ctx.check.set({daily:{runsCompleted:1,bestEligibleAccuracy:0,bestCombo:9}});
 assert.equal(el('q2').textContent,'1/3');assert.equal(el('q3').textContent,'0/90%');assert.equal(el('q4').textContent,'9/15');
 console.log('Skill goals display server progress and completed count.');
 
+
+ctx.check.set({activeAlbum:3,packs:1,collection:{...Object.fromEntries(Array.from({length:48},(_,i)=>[i,1])),48:1},badges:[]});
+assert.equal(el('collectionValue').textContent,'1 / 24');assert.match(el('activeAlbumHint').textContent,/Cosmic Explorers/);assert.match(el('albumGoalHint').textContent,/23 stickers to Cosmic Collector/);assert.equal(el('album3Btn').disabled,false);assert.equal(el('uniqueValue').textContent,49);
+ctx.check.set({activeAlbum:1,collection:Object.fromEntries(Array.from({length:24},(_,i)=>[i,1]))});assert.equal(el('album3Btn').disabled,true);
+console.log('Album 3 UI passed: independent progress, collector name and prerequisite.');

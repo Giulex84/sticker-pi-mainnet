@@ -657,6 +657,7 @@
         <div class="albumSelector" aria-label="Select album">
           <button id="album1Btn" class="secondary albumChoice" onclick="switchAlbum(1)"></button>
           <button id="album2Btn" class="secondary albumChoice" onclick="switchAlbum(2)"></button>
+          <button id="album3Btn" class="secondary albumChoice" onclick="switchAlbum(3)"></button>
         </div>
         <p id="activeAlbumHint" class="mini muted"></p>
         <div class="dashboard">
@@ -1008,11 +1009,38 @@
         ["🪨","Tide Stone","common"],["🪷","Water Lily","rare"],
         ["🗺️","Sunken Map","epic"],["🏰","Lost Atlantis","legendary"]
       );
+      stickers.push(
+        ["☄️", "Comet Trail", "common"],
+        ["👨‍🚀", "Star Voyager", "rare"],
+        ["🌑", "Silent Moon", "common"],
+        ["🛰️", "Sky Satellite", "common"],
+        ["🔭", "Deep Sky", "rare"],
+        ["🪨", "Meteor Pebble", "common"],
+        ["🌠", "Falling Light", "common"],
+        ["🌌", "Spiral Galaxy", "epic"],
+        ["🌞", "Solar Crown", "epic"],
+        ["🧑‍🔬", "Cosmic Scientist", "rare"],
+        ["🧭", "Stellar Compass", "rare"],
+        ["🔋", "Power Cell", "common"],
+        ["🤖", "Moon Rover", "common"],
+        ["💫", "Stardust Ring", "rare"],
+        ["🧰", "Explorer Kit", "common"],
+        ["⚛️", "Quantum Core", "epic"],
+        ["🌒", "Lunar Crescent", "rare"],
+        ["🛡️", "Astro Shield", "common"],
+        ["🌀", "Wormhole Gate", "epic"],
+        ["📡", "Deep Space Signal", "rare"],
+        ["❄️", "Ice Crystal", "common"],
+        ["🧪", "Nebula Sample", "rare"],
+        ["💥", "Supernova Burst", "epic"],
+        ["👑", "Cosmic Sovereign", "legendary"]
+      );
       var albumSwitchBusy=false,paymentFlowBusy=false,packOpenBusy=false,stateRequestSequence=0,stateAppliedSequence=0;
-      function activeAlbum(){return player.activeAlbum===2?2:1}
-      function albumIndices(id=activeAlbum()){return Array.from({length:24},(_,i)=>(id===2?24:0)+i)}
-      function albumName(id=activeAlbum()){return id===2 ? (lang()==="zh" ? "图鉴 2 · 海洋奇境" : "Album 2 · Ocean Wonders") : (lang()==="zh" ? "图鉴 1 · Pioneer Collection" : "Album 1 · Pioneer Collection")}
-      function albumBadge(){return activeAlbum()===2?"ocean_collector_s2":"master_collector_s1"}
+      function activeAlbum(){return [1,2,3].includes(player.activeAlbum)?player.activeAlbum:1}
+      function albumIndices(id=activeAlbum()){return Array.from({length:24},(_,i)=>(id-1)*24+i)}
+      function albumName(id=activeAlbum()){if(id===3)return lang()==="zh"?"图鉴 3 · 宇宙探索者":"Album 3 · Cosmic Explorers";return id===2 ? (lang()==="zh" ? "图鉴 2 · 海洋奇境" : "Album 2 · Ocean Wonders") : (lang()==="zh" ? "图鉴 1 · Pioneer Collection" : "Album 1 · Pioneer Collection")}
+      function collectorName(id=activeAlbum()){return [null,"Master Collector","Ocean Collector","Cosmic Collector"][id]}
+      function albumBadge(){if(activeAlbum()===3)return "cosmic_collector_s3";return activeAlbum()===2?"ocean_collector_s2":"master_collector_s1"}
       function totalUnique(){return Object.values(player.collection||{}).filter(n=>Number(n)>0).length}
       let player = {
         version: 4,
@@ -1216,15 +1244,16 @@
         return albumIndices(id).filter(i=>Number(player.collection?.[i])>0).length;
       }
       function renderAlbumSelector(){
-        const zh=lang()==="zh",unlocked=uniqueCount(1)===24;
-        for(const id of [1,2]){
+        const zh=lang()==="zh";
+        for(const id of [1,2,3]){
+          const unlocked=id===1||Array.from({length:id-1},(_,i)=>uniqueCount(i+1)===24).every(Boolean);
           const button=document.getElementById("album"+id+"Btn");
-          button.innerHTML=`${id===2?"🌊":"✨"} ${albumName(id)}<small>${uniqueCount(id)}/24 · ${id===2&&!unlocked?(zh?"完成图鉴 1 解锁":"Complete Album 1 to unlock"):(zh?"永久收藏":"Permanent collection")}</small>`;
-          button.disabled=albumSwitchBusy || (id===2&&!unlocked);
+          button.innerHTML=`${id===3?"🌌":id===2?"🌊":"✨"} ${albumName(id)}<small>${uniqueCount(id)}/24 · ${id>1&&!unlocked?(zh?`完成图鉴 ${id-1} 解锁`:`Complete Album ${id-1} to unlock`):(zh?"永久收藏":"Permanent collection")}</small>`;
+          button.disabled=albumSwitchBusy || (id>1&&!unlocked);
           button.classList.toggle("active",activeAlbum()===id);
         }
         document.getElementById("activeAlbumHint").textContent=zh ? `当前卡包和重复副本属于：${albumName()}` : `Packs and duplicate conversions belong to ${albumName()}.`;
-        document.getElementById("masterBadge").textContent=activeAlbum()===2?"🏆 Ocean Collector · Album 2":"🏆 Master Collector · Album 1";
+        document.getElementById("masterBadge").textContent=`🏆 ${collectorName()} · Album ${activeAlbum()}`;
         document.getElementById("bonusSubText").textContent=zh ? `0.01 Pi 购买 ${albumName()} 的一个卡包。` : `Buy one pack for ${albumName()} for 0.01 Pi.`;
       }
       async function switchAlbum(id){
@@ -1239,9 +1268,9 @@
         document.getElementById("packReveal").innerHTML="";document.getElementById("packSummary").textContent="";
         if(document.getElementById("payBtn").textContent==="Purchased ✓"){document.getElementById("payBtn").disabled=false;document.getElementById("payBtn").textContent=dict[lang()].buy;}
         conversionOptions=null;renderAlbum();renderDupes();await loadConversionOptions();
-        if(d.starterGranted)document.getElementById("activeAlbumHint").textContent=lang()==="zh"?"海洋奇境已解锁！获得 1 个免费起始卡包。":"Ocean Wonders unlocked! Your free starter pack is ready.";
+        if(d.starterGranted)document.getElementById("activeAlbumHint").textContent=lang()==="zh"?`${albumName(id)} 已解锁！获得 1 个免费起始卡包。`:`${albumName(id)} unlocked! Your free starter pack is ready.`;
       }
-      async function startNextAlbum(){document.getElementById("albumCelebration").classList.add("hidden");await switchAlbum(2);show("packs")}
+      async function startNextAlbum(){document.getElementById("albumCelebration").classList.add("hidden");await switchAlbum(Number(document.getElementById("nextAlbumBtn").dataset.album));show("packs")}
       function calcLevel() {
         player.level = Math.max(1, Math.floor((player.xp || 0) / 100) + 1);
       }
@@ -1345,7 +1374,7 @@
         document.getElementById("dailyResetHint").textContent = zh ? "每日挑战于 00:00 UTC 重置。连续天数以完成挑战为准。" : "Daily challenges reset at 00:00 UTC. Complete a run each day to build your streak.";
         const remaining = Math.max(0, 24 - uniqueCount());
         document.getElementById("albumGoalHint").textContent = remaining
-          ? (zh ? `还差 ${remaining} 张即可获得收藏大师、250 经验和 3 个卡包。` : `${remaining} stickers to ${activeAlbum()===2?"Ocean Collector":"Master Collector"}: +250 XP and +3 packs.`)
+          ? (zh ? `还差 ${remaining} 张即可获得收藏大师、250 经验和 3 个卡包。` : `${remaining} stickers to ${collectorName()}: +250 XP and +3 packs.`)
           : (zh ? "24/24：图鉴完成！" : "24/24: album complete!");
       }
       async function stateApi(action = "load", payload = {}, retry = true) {
@@ -1387,8 +1416,8 @@
       }
       function showAlbumCelebration(id=activeAlbum()) {
         document.getElementById("completionText").textContent=lang()==="zh" ? `已收集 ${albumName(id)} 的全部 24 张贴纸。` : `You collected all 24 stickers in ${albumName(id)}.`;
-        document.getElementById("completionReward").textContent=(id===2?"Ocean Collector":"Master Collector")+" · +250 XP · +3 packs";
-        document.getElementById("nextAlbumBtn").classList.toggle("hidden",id!==1);
+        document.getElementById("completionReward").textContent=collectorName(id)+" · +250 XP · +3 packs";
+        const next=document.getElementById("nextAlbumBtn");next.classList.toggle("hidden",id>=3);next.dataset.album=String(id+1);next.textContent=lang()==="zh"?`探索图鉴 ${id+1}`:`Explore Album ${id+1}`;
         document.getElementById("albumCelebration").classList.remove("hidden");
         if (navigator.vibrate) navigator.vibrate([70,40,100,40,140]);
       }
@@ -1828,7 +1857,7 @@
         return pool[Math.floor(Math.random() * pool.length)][1];
       }
       function pendingPackRequest(){
-        try{const r=JSON.parse(gameStorage.getItem("sticker-pack:"+player.uid)||"null");return r&&typeof r.openId==="string"&&r.openId.length>0&&r.openId.length<=80&&[1,2].includes(r.albumId)?r:null}catch{return null}
+        try{const r=JSON.parse(gameStorage.getItem("sticker-pack:"+player.uid)||"null");return r&&typeof r.openId==="string"&&r.openId.length>0&&r.openId.length<=80&&[1,2,3].includes(r.albumId)?r:null}catch{return null}
       }
       async function openPack() {
         if(packOpenBusy||albumSwitchBusy)return;

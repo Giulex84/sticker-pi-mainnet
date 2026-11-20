@@ -144,3 +144,25 @@ console.log('Negative payment/UTC tests passed: forged metadata/UID/amount/netwo
 Object.assign(payment,goodPayment,{status:{cancelled:true}});assert.equal((await pay({action:'recover',paymentId:payment.identifier})).body.cancelled,true);
 Object.assign(payment,goodPayment,{user_uid:'other',status:{cancelled:true}});assert.equal((await pay({action:'recover',paymentId:payment.identifier})).code,400);
 console.log('Confirmed cancellation recovery clears a pending request only after server payment ownership/product validation.');
+
+
+// Album 3: additive migration, prerequisite, inventory boundaries and replay.
+p=await seed(Object.fromEntries(Array.from({length:24},(_,i)=>[i,1])));
+await assert.rejects(()=>selectPlayerAlbum(uid,name,3),/Complete Album 2/);
+await assert.rejects(()=>selectPlayerAlbum(uid,name,4),/Invalid album/);
+const oldCollection=Object.fromEntries(Array.from({length:48},(_,i)=>[i,1]));
+p=await seed(oldCollection);p.xp=11407;p.badges=['master_collector_s1','ocean_collector_s2'];p.packsByAlbum={1:2,2:4};p.packs=2;await savePlayer(p);
+d=await selectPlayerAlbum(uid,name,3);assert.equal(d.starterGranted,true);assert.equal(d.player.packs,1);assert.equal(d.player.xp,11407);assert.equal(d.player.packsByAlbum[1],2);assert.equal(d.player.packsByAlbum[2],4);for(let i=0;i<48;i++)assert.equal(d.player.collection[i],1);
+d=await selectPlayerAlbum(uid,name,3);assert.equal(d.starterGranted,false);assert.equal(d.player.packs,1);
+d=await openPlayerPack(uid,name,{openId:'cosmic-pack-one',albumId:3});assert(d.reveal.every(i=>i>=48&&i<72));assert.equal(new Set(d.reveal).size,3);
+const cosmicAfter=JSON.stringify(d.player);d=await openPlayerPack(uid,name,{openId:'cosmic-pack-one',albumId:3});assert.equal(d.alreadyOpened,true);assert.equal(JSON.stringify(d.player),cosmicAfter);
+await assert.rejects(()=>openPlayerPack(uid,name,{openId:'cosmic-pack-one',albumId:2}),/another album/);
+await selectPlayerAlbum(uid,name,1);d=await grantPaidPack(uid,name,'cosmic-paid-pack',3);assert.equal(d.player.packsByAlbum[3],1);assert.equal(d.player.packs,2);d=await grantPaidPack(uid,name,'cosmic-paid-pack',3);assert.equal(d.alreadyGranted,true);assert.equal(d.player.packsByAlbum[3],1);
+p=await seed({...oldCollection,...Object.fromEntries(Array.from({length:23},(_,i)=>[48+i,i===0?25:1]))});await selectPlayerAlbum(uid,name,3);plan=quoteDuplicateConversion(await getPlayer(uid,name),71);assert.equal(plan.cost,24);assert(plan.consumed.every(x=>x.index>=48&&x.index<72));
+d=await convertDuplicates(uid,name,request(plan,'cosmic_completion_001'));assert.equal(d.albumCompleted,true);assert(d.player.badges.includes('cosmic_collector_s3'));assert.equal(d.player.xp,250);assert.equal(d.player.packs,4);assert.equal(d.player.collection[0],1);assert.equal(d.player.collection[24],1);
+d=await convertDuplicates(uid,name,request(plan,'cosmic_completion_001'));assert.equal(d.player.xp,250);assert.equal(d.player.packs,4);
+console.log('Album 3 passed: old inventory/XP preserved, unlock, starter once, pack isolation/recovery, paid fulfillment replay, conversion isolation and completion once.');
+p=await seed(oldCollection);await selectPlayerAlbum(uid,name,3);p=await getPlayer(uid,name);p.activeRun={id:'cosmic-reward-run',startedAt:Date.now()-30000,day:serverDay(),albumId:3};await savePlayer(p);await selectPlayerAlbum(uid,name,1);d=await recordRun(uid,name,{runId:'cosmic-reward-run',score:28,bestCombo:11,hits:24,misses:3});assert.equal(d.albumId,3);assert.equal(d.player.packsByAlbum[3],2);assert.equal(d.player.activeAlbum,1);
+Object.assign(payment,{identifier:'pi-cosmic-payment',user_uid:uid,direction:'user_to_app',network:'Pi Network',amount:0.01,memo:'Sticker.pi Album 3 Bonus Pack',metadata:{product:'sticker_bonus_pack_mainnet_v1',albumId:3},status:{developer_completed:true,transaction_verified:true},transaction:{txid:'verified-tx'}});
+paid=await pay({action:'complete',paymentId:payment.identifier,txid:'verified-tx'});assert.equal(paid.code,200);assert.equal(paid.body.player.activeAlbum,1);assert.equal(paid.body.player.packsByAlbum[3],3);paid=await pay({action:'recover',paymentId:payment.identifier});assert.equal(paid.code,200);assert.equal(paid.body.player.packsByAlbum[3],3);
+console.log('Album 3 daily reward and official payment metadata routing/recovery passed without live transactions.');

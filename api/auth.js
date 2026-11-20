@@ -23,7 +23,7 @@ async function getPayment(id,key){
 }
 
 function validPayment(p,uid,allowCancelled=false){
-  return p?.user_uid===uid&&p.direction==='user_to_app'&&p.network==='Pi Network'&&Number(p.amount)===AMOUNT&&(p.memo===MEMO&&(p.metadata?.albumId??1)===1||p.memo===`Sticker.pi Album ${p.metadata?.albumId??1} Bonus Pack`)&&p.metadata?.product===PRODUCT&&[1,2].includes(p.metadata?.albumId??1)&&(allowCancelled||!p.status?.cancelled&&!p.status?.user_cancelled);
+  return p?.user_uid===uid&&p.direction==='user_to_app'&&p.network==='Pi Network'&&Number(p.amount)===AMOUNT&&(p.memo===MEMO&&(p.metadata?.albumId??1)===1||p.memo===`Sticker.pi Album ${p.metadata?.albumId??1} Bonus Pack`)&&p.metadata?.product===PRODUCT&&[1,2,3].includes(p.metadata?.albumId??1)&&(allowCancelled||!p.status?.cancelled&&!p.status?.user_cancelled);
 }
 
 async function approve(id,key){
@@ -57,7 +57,7 @@ async function handler(req,res){
     // Identity, amount, network and product still come from the official lookup.
     if(action==='recover'&&validPayment(p,user.uid,true)&&(p.status?.cancelled||p.status?.user_cancelled))return res.status(200).json({success:true,cancelled:true,completed:false});
     if(!validPayment(p,user.uid))return res.status(400).json({success:false,error:'Payment validation failed'});
-    if(!albumUnlocked(await getPlayer(user.uid,user.username),p.metadata?.albumId??1))return res.status(409).json({success:false,error:'Complete Album 1 to unlock Album 2'});
+    if(!albumUnlocked(await getPlayer(user.uid,user.username),p.metadata?.albumId??1))return res.status(409).json({success:false,error:'Complete the previous albums to unlock this album'});
     if(action==='approve'){
       if(!p.status?.developer_approved)await approve(paymentId,apiKey);
       return res.status(200).json({success:true,approved:true});

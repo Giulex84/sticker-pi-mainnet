@@ -124,3 +124,13 @@ New analytics collect successful Mainnet Pi logins, distinct daily accounts and 
 ## First-session guidance · 18 November 2026
 
 A new player starts with one free pack. Before the first pack is opened, the dashboard highlights the existing recoverable pack-opening action. After the first opening, players can go directly to the daily challenge. The normal server-verified reward and purchase paths remain the source of truth.
+
+
+
+## Album 3 — Cosmic Explorers · 21 November 2026
+
+Adds 24 space-themed stickers at indices 48–71. Album 3 unlocks after both earlier albums are complete. Selecting it for the first time grants one free starter pack. Its Cosmic Collector badge, +250 XP and three celebration packs are awarded once on completion.
+
+Packs, duplicates, conversions, run rewards and optional purchases remain bound to their album. Existing collection indices 0–47, XP, badges, purchase receipts and prior inventories are preserved; legacy players acquire an empty third inventory without resets or XP backfill. Existing daily reward caps remain shared across albums.
+
+English and Chinese album navigation are included. Automated checks cover migration, unlock, one-time starter/completion, album-specific pack recovery/conversion, daily reward binding and simulated official payment routing. Actual Pi Browser appearance and real payment completion still require a separate live check.

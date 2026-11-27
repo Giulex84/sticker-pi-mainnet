@@ -1,0 +1,13 @@
+{
+  "name": "Sticker.pi",
+  "webRoot": ".",
+  "entry": "/index.html",
+  "loginSelector": "#loginBtn",
+  "redis": true,
+  "commands": [
+    "npm test",
+    "npm run check:build",
+    "npm run test:owner-preview",
+    "npm run test:login-metrics"
+  ]
+}

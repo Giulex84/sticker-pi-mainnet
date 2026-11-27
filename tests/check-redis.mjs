@@ -13,7 +13,7 @@ try {
   // Lose only the reply, after the actual Lua script has committed inventory + receipt.
   let lost=false;globalThis.fetch=async(url,o)=>{const r=await redis.fetch(url,o),a=JSON.parse(o.body);if(!lost&&a[0]==='EVAL'&&a[1].includes('ARGV[4]')){lost=true;throw Error('Response lost after commit')}return r};
   before=await s.getPlayer(uid,'Tester');await assert.rejects(()=>s.openPlayerPack(uid,'Tester',{openId:'lost-open',albumId:1}),/Response lost/);
-  let d=await s.openPlayerPack(uid,'Tester',{openId:'lost-open',albumId:1});assert.equal(d.alreadyOpened,true);assert.equal(d.player.packs,before.packs-1);globalThis.fetch=redis.fetch;
+  let d=await s.openPlayerPack(uid,'Tester',{openId:'lost-open',albumId:1});assert.equal(d.alreadyOpened,true);assert.equal(d.player.packs,before.packs-1+(d.albumCompleted?3:0),'Lost-reply replay preserves exactly one consumption and any legitimate album completion reward');globalThis.fetch=redis.fetch;
   // A stale lock holder and a newer player snapshot can never be overwritten.
   for(const fault of ['lock','snapshot']) {
     await seed({0:5});let injected=false;
